@@ -2,113 +2,218 @@ import { Level } from '../../types/level';
 
 export const level6: Level = {
   "id": 6,
-  "name": "Vague Pixel",
-  "rows": 8,
+  "name": "Winnie",
+  "rows": 18,
   "columns": 8,
-  "difficulty": "medium",
-  "category": "Généré",
+  "difficulty": "hard",
+  "category": "Personnages",
   "palette": [
     {
-      "id": "c_dark",
-      "hex": "#0F172A",
-      "name": "Nuit"
+      "id": "c_orange",
+      "hex": "#DFC29B",
+      "name": "Orange"
     },
     {
-      "id": "c_blue",
-      "hex": "#0284C7",
-      "name": "Bleu Ciel"
+      "id": "c_orange_2",
+      "hex": "#EEB556",
+      "name": "Orange"
     },
     {
-      "id": "c_cyan",
-      "hex": "#06B6D4",
-      "name": "Cyan Néon"
+      "id": "c_blanc",
+      "hex": "#EFEFEE",
+      "name": "Blanc"
     },
     {
-      "id": "c_gold",
-      "hex": "#F59E0B",
-      "name": "Or Éclat"
+      "id": "c_rouge",
+      "hex": "#CE2836",
+      "name": "Rouge"
+    },
+    {
+      "id": "c_orange_3",
+      "hex": "#CE8754",
+      "name": "Orange"
     }
   ],
   "targetGrid": [
     [
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold"
+      "c_blanc",
+      "c_blanc",
+      "c_blanc",
+      "c_orange_2",
+      "c_blanc",
+      "c_blanc",
+      "c_blanc",
+      "c_blanc"
     ],
     [
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue"
+      "c_blanc",
+      "c_blanc",
+      "c_blanc",
+      "c_orange_2",
+      "c_orange",
+      "c_blanc",
+      "c_blanc",
+      "c_orange"
     ],
     [
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold"
+      "c_blanc",
+      "c_blanc",
+      "c_orange",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2"
     ],
     [
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue"
+      "c_blanc",
+      "c_orange",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange",
+      "c_blanc"
     ],
     [
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold"
+      "c_blanc",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_3",
+      "c_orange_3",
+      "c_orange_2",
+      "c_orange",
+      "c_blanc"
     ],
     [
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue"
+      "c_orange_3",
+      "c_orange_3",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange",
+      "c_blanc"
     ],
     [
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold"
+      "c_orange",
+      "c_rouge",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_3",
+      "c_blanc"
     ],
     [
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue",
-      "c_cyan",
-      "c_gold",
-      "c_dark",
-      "c_blue"
+      "c_orange_3",
+      "c_rouge",
+      "c_rouge",
+      "c_rouge",
+      "c_orange_2",
+      "c_orange_3",
+      "c_rouge",
+      "c_blanc"
+    ],
+    [
+      "c_rouge",
+      "c_rouge",
+      "c_rouge",
+      "c_rouge",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_3",
+      "c_orange"
+    ],
+    [
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_3",
+      "c_rouge",
+      "c_orange_3",
+      "c_orange_2",
+      "c_orange_2",
+      "c_blanc"
+    ],
+    [
+      "c_orange",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_3",
+      "c_orange_2",
+      "c_blanc"
+    ],
+    [
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_blanc"
+    ],
+    [
+      "c_orange_3",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_blanc"
+    ],
+    [
+      "c_orange_3",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange",
+      "c_blanc"
+    ],
+    [
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_2",
+      "c_orange_3",
+      "c_orange",
+      "c_blanc"
+    ],
+    [
+      "c_orange",
+      "c_orange_2",
+      "c_orange",
+      "c_blanc",
+      "c_orange_2",
+      "c_orange_2",
+      "c_blanc",
+      "c_blanc"
+    ],
+    [
+      "c_orange",
+      "c_orange_2",
+      "c_orange",
+      "c_blanc",
+      "c_orange_2",
+      "c_orange_2",
+      "c_blanc",
+      "c_blanc"
+    ],
+    [
+      "c_blanc",
+      "c_orange_2",
+      "c_orange_2",
+      "c_blanc",
+      "c_orange_2",
+      "c_orange_2",
+      "c_blanc",
+      "c_blanc"
     ]
   ]
 };

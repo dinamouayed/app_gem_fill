@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ALL_LEVELS } from "../data/levels";
-import { level7 } from "../data/levels/level7";
-import { level8 } from "../data/levels/level8";
+import { level6 } from "../data/levels/level6";
 import { isShuffledGridSolvable, isTargetGridValid } from "./levelValidation";
 import {
   MIN_PALETTE_DELTA_E,
@@ -54,8 +53,8 @@ describe("shuffleTargetGrid", () => {
   });
 
   it("keeps image levels solvable after shuffle", () => {
-    const shuffled = shuffleTargetGrid(level7.targetGrid, 7);
-    expect(isShuffledGridSolvable(shuffled, level7)).toBe(true);
+    const shuffled = shuffleTargetGrid(level6.targetGrid, 6);
+    expect(isShuffledGridSolvable(shuffled, level6)).toBe(true);
   });
 
   it("starts with at most 20% correct gems on balanced two-zone grids", () => {
@@ -72,7 +71,7 @@ describe("shuffleTargetGrid", () => {
   });
 
   it("starts with at most 20% correct gems on generated levels", () => {
-    expect(getInitialCorrectPercent(level8.targetGrid, 8)).toBeLessThanOrEqual(
+    expect(getInitialCorrectPercent(level6.targetGrid, 6)).toBeLessThanOrEqual(
       MAX_START_CORRECT_PERCENT,
     );
   });
@@ -95,7 +94,7 @@ describe("all levels solvability", () => {
   );
 
   it.each(
-    ALL_LEVELS.filter((level) => level.id > 6).map(
+    ALL_LEVELS.filter((level) => level.id >= 6).map(
       (level) => [level.id, level] as const,
     ),
   )(
@@ -108,7 +107,7 @@ describe("all levels solvability", () => {
   );
 
   it.each(
-    ALL_LEVELS.filter((level) => level.id >= 8).map(
+    ALL_LEVELS.filter((level) => level.id >= 6).map(
       (level) => [level.id, level] as const,
     ),
   )(

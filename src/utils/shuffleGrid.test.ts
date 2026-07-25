@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { level8 } from "../data/levels/level8";
+import { level6 } from "../data/levels/level6";
 import { isShuffledGridSolvable } from "./levelValidation";
 import { shuffleTargetGrid } from "./shuffleGrid";
 import { hasMatchingColorCounts } from "./validateGrid";
@@ -29,7 +29,7 @@ describe("shuffleTargetGrid", () => {
   });
 
   it("keeps generated levels solvable after shuffle", () => {
-    const shuffled = shuffleTargetGrid(level8.targetGrid, 8);
-    expect(isShuffledGridSolvable(shuffled, level8)).toBe(true);
+    const shuffled = shuffleTargetGrid(level6.targetGrid, 6);
+    expect(isShuffledGridSolvable(shuffled, level6)).toBe(true);
   });
 });
