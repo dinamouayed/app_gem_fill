@@ -1,4 +1,4 @@
-import type { CellPosition } from "../types/game.ts";
+import type { CellPosition } from "../types/game";
 
 /**
  * Perform an 8-directional BFS Flood Fill to find all connected gems of the same color.
@@ -9,6 +9,7 @@ import type { CellPosition } from "../types/game.ts";
 export function getConnectedGemGroup(
   grid: (string | null)[][],
   startPos: CellPosition,
+  targetGrid?: string[][],
 ): CellPosition[] {
   if (!grid || grid.length === 0 || grid[0].length === 0) return [];
 
@@ -20,6 +21,11 @@ export function getConnectedGemGroup(
 
   const targetColor = grid[row][col];
   if (!targetColor) return [];
+
+  // A correctly placed gem is locked
+  if (targetGrid && targetGrid[row]?.[col] === targetColor) {
+    return [];
+  }
 
   const visited: boolean[][] = Array.from({ length: rows }, () =>
     Array(cols).fill(false),
@@ -58,7 +64,8 @@ export function getConnectedGemGroup(
         nc >= 0 &&
         nc < cols &&
         !visited[nr][nc] &&
-        grid[nr][nc] === targetColor
+        grid[nr][nc] === targetColor &&
+        (!targetGrid || targetGrid[nr]?.[nc] !== targetColor)
       ) {
         visited[nr][nc] = true;
         queue.push({ row: nr, col: nc });
@@ -128,14 +135,19 @@ export function findBoardDestinationSlots(
   const cols = grid[0].length;
   const { row: destRow, col: destCol } = destination;
 
-  if (destRow < 0 || destRow >= rows || destCol < 0 || destCol >= cols)
+  if (destRow < 0 || destRow >= rows || destCol < 0 || destCol >= cols) {
     return [];
+  }
 
-  const isTargetMatching = targetGrid[destRow]?.[destCol] === groupColor;
+  // Refuse immediately a destination of the wrong color
+  if (targetGrid[destRow]?.[destCol] !== groupColor) {
+    return [];
+  }
 
   const visited: boolean[][] = Array.from({ length: rows }, () =>
     Array(cols).fill(false),
   );
+
   const queue: CellPosition[] = [destination];
   visited[destRow][destCol] = true;
 
@@ -146,6 +158,10 @@ export function findBoardDestinationSlots(
     { r: 1, c: 0 },
     { r: 0, c: -1 },
     { r: 0, c: 1 },
+    { r: -1, c: -1 },
+    { r: -1, c: 1 },
+    { r: 1, c: -1 },
+    { r: 1, c: 1 },
   ];
 
   while (queue.length > 0) {
@@ -157,9 +173,7 @@ export function findBoardDestinationSlots(
 
     // Cell is candidate if it's empty (or part of selected group being moved) AND matches target color rule
     const isSlotAvailable = cellValue === null || isSelectedCell;
-    const isColorCompatible = isTargetMatching
-      ? cellTargetColor === groupColor
-      : true;
+    const isColorCompatible = cellTargetColor === groupColor;
 
     if (isSlotAvailable && isColorCompatible) {
       candidateSlots.push(current);
@@ -175,9 +189,7 @@ export function findBoardDestinationSlots(
         const nextValue = grid[nr][nc];
         const nextIsSelected = selectedSet.has(`${nr},${nc}`);
         const nextAvailable = nextValue === null || nextIsSelected;
-        const nextCompatible = isTargetMatching
-          ? nextTargetColor === groupColor
-          : true;
+        const nextCompatible = nextTargetColor === groupColor;
 
         // Traverse only adjacent valid target areas or empty slots
         if (nextAvailable && nextCompatible) {
