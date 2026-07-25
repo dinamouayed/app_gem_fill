@@ -3,11 +3,22 @@ import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ProgressProvider, useProgress } from '../src/context/ProgressContext';
 
-export default function RootLayout() {
+function AppNavigation() {
+  const { loading } = useProgress();
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#38BDF8" />
+      </View>
+    );
+  }
+
   return (
-    <GestureHandlerRootView style={styles.container}>
+    <>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -21,6 +32,16 @@ export default function RootLayout() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="game/[levelId]" />
       </Stack>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={styles.container}>
+      <ProgressProvider>
+        <AppNavigation />
+      </ProgressProvider>
     </GestureHandlerRootView>
   );
 }
@@ -29,5 +50,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0F172A',
+  },
+  loadingContainer: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

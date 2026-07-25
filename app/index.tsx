@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, Grid, Settings, Gem as GemIcon, Award, Sparkles, RefreshCw } from 'lucide-react-native';
@@ -9,20 +9,16 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { progress, loading, reloadProgress } = useProgress();
+  const { progress, reloadProgress } = useProgress();
 
   useFocusEffect(
     React.useCallback(() => {
-      reloadProgress();
+      reloadProgress({ silent: true });
     }, [reloadProgress])
   );
 
-  if (loading || !progress) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#38BDF8" />
-      </View>
-    );
+  if (!progress) {
+    return null;
   }
 
   const currentLevel = getCurrentLevel(progress.currentUnlockedLevel);
