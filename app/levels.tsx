@@ -4,7 +4,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Layers } from 'lucide-react-native';
 import { useProgress } from '../src/hooks/useProgress';
-import { ALL_LEVELS } from '../src/data/levels';
+import { ALL_LEVELS, isLevelUnlocked } from '../src/data/levels';
 import { LevelCard } from '../src/components/LevelCard';
 
 export default function LevelsScreen() {
@@ -48,7 +48,7 @@ export default function LevelsScreen() {
           {ALL_LEVELS.map((level) => {
             const levelProgress = progress.completedLevels[level.id];
             const isCompleted = !!levelProgress?.completed;
-            const isUnlocked = level.id <= progress.currentUnlockedLevel;
+            const isUnlocked = isLevelUnlocked(level.id, progress.currentUnlockedLevel);
             const isInProgress =
               !isCompleted &&
               isUnlocked &&

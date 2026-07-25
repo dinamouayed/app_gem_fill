@@ -10,7 +10,9 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "vitest",
-    "test:run": "vitest run"
+    "test:run": "vitest run",
+    "generate-level": "scripts/level-generator/.venv/bin/python scripts/level-generator/generate_level.py",
+    "generate-levels-batch": "scripts/level-generator/.venv/bin/python scripts/level-generator/generate_batch.py"
   },
   "dependencies": {
     "@expo/ui": "~0.2.0-beta.9",

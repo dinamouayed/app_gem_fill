@@ -39,3 +39,10 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Python level generator
+scripts/level-generator/.venv/
+scripts/level-generator/__pycache__/
+scripts/level-generator/.pytest_cache/
+assets/source/generated/
+*.pyc

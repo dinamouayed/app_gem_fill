@@ -4,7 +4,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Play, Grid, Settings, Gem as GemIcon, Award, Sparkles, RefreshCw } from 'lucide-react-native';
 import { useProgress } from '../src/hooks/useProgress';
-import { ALL_LEVELS, getLevelById, getTotalLevelsCount } from '../src/data/levels';
+import { getCurrentLevel, getTotalLevelsCount } from '../src/data/levels';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
@@ -25,15 +25,14 @@ export default function HomeScreen() {
     );
   }
 
-  const currentLevelId = Math.min(progress.currentUnlockedLevel, getTotalLevelsCount());
-  const currentLevel = getLevelById(currentLevelId) || ALL_LEVELS[0];
+  const currentLevel = getCurrentLevel(progress.currentUnlockedLevel);
 
   const totalLevels = getTotalLevelsCount();
   const completedCount = Object.values(progress.completedLevels).filter((l) => l.completed).length;
   const overallPercentage = Math.round((completedCount / totalLevels) * 100);
 
   const hasActiveSave =
-    progress.activeSavedGame && progress.activeSavedGame.levelId === currentLevelId;
+    progress.activeSavedGame && progress.activeSavedGame.levelId === currentLevel.id;
 
   return (
     <SafeAreaView style={styles.container}>

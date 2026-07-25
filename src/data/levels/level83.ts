@@ -1,0 +1,230 @@
+import { Level } from '../../types/level';
+
+export const level83: Level = {
+  "id": 83,
+  "name": "Cupcake",
+  "rows": 14,
+  "columns": 12,
+  "difficulty": "hard",
+  "category": "Généré",
+  "palette": [
+    {
+      "id": "c_vert",
+      "hex": "#A4DD8D",
+      "name": "Vert"
+    },
+    {
+      "id": "c_vert_2",
+      "hex": "#09513D",
+      "name": "Vert"
+    },
+    {
+      "id": "c_jaune",
+      "hex": "#FBFBC7",
+      "name": "Jaune"
+    },
+    {
+      "id": "c_vert_3",
+      "hex": "#3DC28C",
+      "name": "Vert"
+    }
+  ],
+  "targetGrid": [
+    [
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2"
+    ],
+    [
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_3",
+      "c_vert",
+      "c_vert",
+      "c_vert_3",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2"
+    ],
+    [
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2",
+      "c_vert_2"
+    ],
+    [
+      "c_vert_2",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_2"
+    ],
+    [
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert",
+      "c_vert",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_3",
+      "c_vert",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert_3",
+      "c_vert",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_3",
+      "c_jaune",
+      "c_jaune",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_jaune",
+      "c_jaune",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_3",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_3",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_3",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_3",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_jaune",
+      "c_vert_3"
+    ],
+    [
+      "c_vert_2",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert",
+      "c_vert_2"
+    ]
+  ]
+};

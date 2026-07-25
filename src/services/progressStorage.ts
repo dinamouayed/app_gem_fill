@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserProgressData, LevelProgress, SavedGameState } from '../types/game';
+import { ALL_LEVELS, syncUnlockedLevel } from '../data/levels';
 
 const STORAGE_KEY = '@gem_fill_user_progress_v1';
 
@@ -16,10 +17,27 @@ export async function getUserProgress(): Promise<UserProgressData> {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_PROGRESS;
     const parsed = JSON.parse(raw) as Partial<UserProgressData>;
-    return {
+    const progress: UserProgressData = {
       ...DEFAULT_PROGRESS,
       ...parsed,
     };
+
+    const syncedUnlockedLevel = syncUnlockedLevel(
+      progress.currentUnlockedLevel,
+      progress.completedLevels,
+    );
+
+    if (syncedUnlockedLevel === progress.currentUnlockedLevel) {
+      return progress;
+    }
+
+    const syncedProgress: UserProgressData = {
+      ...progress,
+      currentUnlockedLevel: syncedUnlockedLevel,
+    };
+
+    await saveUserProgress(syncedProgress);
+    return syncedProgress;
   } catch (error) {
     console.error('Error reading user progress from AsyncStorage:', error);
     return DEFAULT_PROGRESS;
@@ -59,7 +77,11 @@ export async function markLevelCompleted(
     },
   };
 
-  const nextUnlocked = Math.max(current.currentUnlockedLevel, levelId + 1);
+  const levelIndex = ALL_LEVELS.findIndex((level) => level.id === levelId);
+  const nextLevel = levelIndex >= 0 ? ALL_LEVELS[levelIndex + 1] : undefined;
+  const nextUnlocked = nextLevel
+    ? Math.max(current.currentUnlockedLevel, nextLevel.id)
+    : Math.max(current.currentUnlockedLevel, levelId + 1);
 
   // Clear saved game for this level if completed
   let updatedSavedGame = current.activeSavedGame;
