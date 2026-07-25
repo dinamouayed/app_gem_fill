@@ -128,7 +128,6 @@ const AnimatedCorrectGem: React.FC<AnimatedCorrectGemProps> = ({
           animatedStyle,
         ]}
       >
-        <View style={styles.correctGemHighlight} />
         <View style={styles.correctGemInnerBorder} />
         <Animated.View style={[styles.correctFlash, flashStyle]} />
       </Animated.View>
@@ -309,16 +308,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.18)",
     overflow: "hidden",
-  },
-
-  correctGemHighlight: {
-    position: "absolute",
-    top: "8%",
-    left: "12%",
-    width: "42%",
-    height: "14%",
-    borderRadius: 999,
-    backgroundColor: "rgba(255, 255, 255, 0.28)",
   },
 
   correctGemInnerBorder: {

@@ -1,20 +1,28 @@
 import 'react-native-reanimated';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
+import { LoadingScreen } from '../src/components/LoadingScreen';
 import { ProgressProvider, useProgress } from '../src/context/ProgressContext';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
+
+const MIN_SPLASH_MS = 1400;
 
 function AppNavigation() {
   const { loading } = useProgress();
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false);
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#38BDF8" />
-      </View>
-    );
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimeElapsed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading || !minTimeElapsed) {
+    return <LoadingScreen />;
   }
 
   return (
@@ -50,11 +58,5 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#0F172A',
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: '#0F172A',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

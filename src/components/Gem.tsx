@@ -181,17 +181,6 @@ export const Gem: React.FC<GemProps> = ({
         style={[StyleSheet.absoluteFill, { borderRadius }]}
       />
 
-      <View
-        style={[
-          styles.glossHighlight,
-          {
-            width: size * 0.45,
-            height: size * 0.25,
-            borderRadius: borderRadius * 0.8,
-          },
-        ]}
-      />
-
       <Animated.View
         pointerEvents="none"
         style={[styles.flashOverlay, { borderRadius }, flashStyle]}
@@ -234,13 +223,6 @@ const styles = StyleSheet.create({
     padding: 2,
     overflow: "hidden",
     borderWidth: 1.5,
-  },
-
-  glossHighlight: {
-    backgroundColor: "rgba(255, 255, 255, 0.45)",
-    marginTop: 2,
-    marginLeft: 2,
-    transform: [{ skewX: "-20deg" }],
   },
 
   flashOverlay: {
