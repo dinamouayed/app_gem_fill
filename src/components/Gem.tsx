@@ -1,30 +1,53 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React, { useEffect } from "react";
+import { Pressable, StyleSheet, View } from "react-native";
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
+import { LinearGradient } from "expo-linear-gradient";
+import { MOTION } from "../constants/motion";
 
-interface GemProps {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export interface GemProps {
   colorHex: string;
   size: number;
   isSelected?: boolean;
   isDimmed?: boolean;
   isCorrect?: boolean;
+  interactive?: boolean;
   onPress?: () => void;
   onLongPress?: () => void;
+  placementPulseToken?: number;
+  cascadeDelayMs?: number;
+  entryRotationDeg?: number;
+  settleInstant?: boolean;
 }
 
-// Adjust hex color light/dark for gradients & bevels
 function adjustColor(hex: string, percent: number): string {
-  let num = parseInt(hex.replace('#', ''), 16);
-  if (isNaN(num)) return hex;
-  let r = (num >> 16) + percent;
-  let g = ((num >> 8) & 0x00ff) + percent;
-  let b = (num & 0x0000ff) + percent;
+  const num = parseInt(hex.replace("#", ""), 16);
 
-  r = Math.min(255, Math.max(0, r));
-  g = Math.min(255, Math.max(0, g));
-  b = Math.min(255, Math.max(0, b));
+  if (Number.isNaN(num)) {
+    return hex;
+  }
 
-  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  let red = (num >> 16) + percent;
+  let green = ((num >> 8) & 0x00ff) + percent;
+  let blue = (num & 0x0000ff) + percent;
+
+  red = Math.min(255, Math.max(0, red));
+  green = Math.min(255, Math.max(0, green));
+  blue = Math.min(255, Math.max(0, blue));
+
+  return (
+    "#" +
+    ((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)
+  );
 }
 
 export const Gem: React.FC<GemProps> = ({
@@ -33,104 +56,246 @@ export const Gem: React.FC<GemProps> = ({
   isSelected = false,
   isDimmed = false,
   isCorrect = false,
+  interactive = true,
   onPress,
   onLongPress,
+  placementPulseToken = 0,
+  cascadeDelayMs = 0,
+  entryRotationDeg = 0,
+  settleInstant = false,
 }) => {
+  const scale = useSharedValue(settleInstant ? 1 : 1);
+  const translateY = useSharedValue(settleInstant ? 0 : 0);
+  const rotate = useSharedValue(0);
+  const opacity = useSharedValue(1);
+  const shadowOpacity = useSharedValue<number>(
+    settleInstant ? MOTION.SHADOW_DEFAULT.opacity : MOTION.SHADOW_DEFAULT.opacity,
+  );
+  const shadowRadius = useSharedValue<number>(
+    settleInstant ? MOTION.SHADOW_DEFAULT.radius : MOTION.SHADOW_DEFAULT.radius,
+  );
+  const shadowOffsetY = useSharedValue<number>(
+    settleInstant ? MOTION.SHADOW_DEFAULT.offsetY : MOTION.SHADOW_DEFAULT.offsetY,
+  );
+  const flashOpacity = useSharedValue(0);
+
   const lightHex = adjustColor(colorHex, 45);
   const darkHex = adjustColor(colorHex, -40);
-
   const borderRadius = Math.max(4, Math.round(size * 0.22));
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      onPress={onPress}
-      onLongPress={onLongPress}
+  useEffect(() => {
+    if (settleInstant) {
+      scale.value = isSelected ? MOTION.SELECTED_SCALE : 1;
+      translateY.value = isSelected ? MOTION.SELECTED_TRANSLATE_Y : 0;
+      rotate.value = 0;
+      shadowOpacity.value = isSelected
+        ? MOTION.SHADOW_SELECTED.opacity
+        : MOTION.SHADOW_DEFAULT.opacity;
+      shadowRadius.value = isSelected
+        ? MOTION.SHADOW_SELECTED.radius
+        : MOTION.SHADOW_DEFAULT.radius;
+      shadowOffsetY.value = isSelected
+        ? MOTION.SHADOW_SELECTED.offsetY
+        : MOTION.SHADOW_DEFAULT.offsetY;
+      return;
+    }
+
+    if (isSelected) {
+      scale.value = withSpring(MOTION.SELECTED_SCALE, MOTION.SPRING_SELECTION);
+      shadowOpacity.value = withSpring(
+        MOTION.SHADOW_SELECTED.opacity,
+        MOTION.SPRING_SELECTION,
+      );
+      shadowRadius.value = withSpring(
+        MOTION.SHADOW_SELECTED.radius,
+        MOTION.SPRING_SELECTION,
+      );
+      shadowOffsetY.value = withSpring(
+        MOTION.SHADOW_SELECTED.offsetY,
+        MOTION.SPRING_SELECTION,
+      );
+
+      translateY.value = withSpring(
+        MOTION.SELECTED_TRANSLATE_Y,
+        MOTION.SPRING_SELECTION,
+      );
+    } else {
+      cancelAnimation(translateY);
+
+      scale.value = withSpring(1, MOTION.SPRING_DESELECT);
+      translateY.value = withSpring(0, MOTION.SPRING_DESELECT);
+      rotate.value = withSpring(0, MOTION.SPRING_DESELECT);
+      shadowOpacity.value = withSpring(
+        MOTION.SHADOW_DEFAULT.opacity,
+        MOTION.SPRING_DESELECT,
+      );
+      shadowRadius.value = withSpring(
+        MOTION.SHADOW_DEFAULT.radius,
+        MOTION.SPRING_DESELECT,
+      );
+      shadowOffsetY.value = withSpring(
+        MOTION.SHADOW_DEFAULT.offsetY,
+        MOTION.SPRING_DESELECT,
+      );
+    }
+  }, [isSelected, settleInstant]);
+
+  useEffect(() => {
+    opacity.value = withTiming(isDimmed ? 0.5 : 1, {
+      duration: MOTION.DIM_DURATION_MS,
+    });
+  }, [isDimmed]);
+
+  useEffect(() => {
+    if (placementPulseToken <= 0) {
+      return;
+    }
+
+    const restScale = isSelected ? MOTION.SELECTED_SCALE : 1;
+    const spring = MOTION.SPRING_PLACEMENT;
+
+    const entryAnimation = () => {
+      "worklet";
+
+      rotate.value = withSequence(
+        withTiming(entryRotationDeg, { duration: 70 }),
+        withSpring(0, spring),
+      );
+
+      scale.value = withSequence(
+        withSpring(0.9, spring),
+        withSpring(restScale, spring),
+      );
+    };
+
+    const delayedEntry = () => {
+      rotate.value = withDelay(
+        cascadeDelayMs,
+        withSequence(
+          withTiming(entryRotationDeg, { duration: 70 }),
+          withSpring(0, spring),
+        ),
+      );
+
+      scale.value = withDelay(
+        cascadeDelayMs,
+        withSequence(
+          withSpring(0.9, spring),
+          withSpring(restScale, spring),
+        ),
+      );
+    };
+
+    if (cascadeDelayMs > 0) {
+      delayedEntry();
+    } else {
+      entryAnimation();
+    }
+  }, [placementPulseToken]);
+
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale.value },
+      { translateY: translateY.value },
+      { rotate: `${rotate.value}deg` },
+    ],
+    opacity: opacity.value,
+    zIndex: isSelected ? 99 : 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: shadowOffsetY.value },
+    shadowOpacity: shadowOpacity.value,
+    shadowRadius: shadowRadius.value,
+    elevation: isSelected
+      ? MOTION.SELECTED_ELEVATION
+      : MOTION.DEFAULT_ELEVATION,
+  }));
+
+  const flashStyle = useAnimatedStyle(() => ({
+    opacity: flashOpacity.value,
+  }));
+
+  const defaultBorderColor = isCorrect
+    ? "rgba(255,255,255,0.4)"
+    : "rgba(255,255,255,0.15)";
+
+  const gemContent = (
+    <View
       style={[
-        styles.container,
-        {
-          width: size,
-          height: size,
-          transform: [{ scale: isSelected ? 1.12 : 1 }],
-          zIndex: isSelected ? 99 : 1,
-          opacity: isDimmed ? 0.5 : 1,
-          shadowColor: isSelected ? '#FBBF24' : '#000',
-          shadowRadius: isSelected ? 8 : 4,
-          elevation: isSelected ? 10 : 5,
-        },
+        styles.gemBody,
+        { borderRadius, borderColor: defaultBorderColor },
       ]}
     >
       <LinearGradient
         colors={[lightHex, colorHex, darkHex]}
         start={{ x: 0.1, y: 0.1 }}
         end={{ x: 0.9, y: 0.9 }}
+        style={[StyleSheet.absoluteFill, { borderRadius }]}
+      />
+
+      <View
         style={[
-          styles.gemBody,
+          styles.glossHighlight,
           {
-            borderRadius,
-            borderColor: isSelected
-              ? '#FBBF24'
-              : isCorrect
-              ? 'rgba(255,255,255,0.4)'
-              : 'rgba(255,255,255,0.15)',
-            borderWidth: isSelected ? 3.5 : 1.5,
+            width: size * 0.45,
+            height: size * 0.25,
+            borderRadius: borderRadius * 0.8,
           },
         ]}
-      >
-        {/* Gloss / Reflection Highlight */}
-        <View
-          style={[
-            styles.glossHighlight,
-            {
-              width: size * 0.45,
-              height: size * 0.25,
-              borderRadius: borderRadius * 0.8,
-            },
-          ]}
-        />
+      />
 
-        {/* Selected Pulse Ring */}
-        {isSelected && (
-          <View
-            style={[
-              styles.selectedBadge,
-              { borderRadius },
-            ]}
-          />
-        )}
-      </LinearGradient>
-    </TouchableOpacity>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.flashOverlay, { borderRadius }, flashStyle]}
+      />
+    </View>
+  );
+
+  if (!interactive) {
+    return (
+      <Animated.View
+        style={[styles.container, { width: size, height: size }, containerStyle]}
+      >
+        {gemContent}
+      </Animated.View>
+    );
+  }
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={[styles.container, { width: size, height: size }, containerStyle]}
+    >
+      {gemContent}
+    </AnimatedPressable>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.35,
-    shadowRadius: 4,
-    elevation: 5,
+    justifyContent: "center",
+    alignItems: "center",
   },
+
   gemBody: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
+    width: "100%",
+    height: "100%",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
     padding: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
+    borderWidth: 1.5,
   },
+
   glossHighlight: {
-    backgroundColor: 'rgba(255, 255, 255, 0.45)',
+    backgroundColor: "rgba(255, 255, 255, 0.45)",
     marginTop: 2,
     marginLeft: 2,
-    transform: [{ skewX: '-20deg' }],
+    transform: [{ skewX: "-20deg" }],
   },
-  selectedBadge: {
-    ...StyleSheet.absoluteFill,
-    borderWidth: 2,
-    borderColor: '#FFF',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+
+  flashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
   },
 });

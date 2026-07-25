@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import * as Haptics from "expo-haptics";
 import { Level } from "../types/level";
 import { CellPosition } from "../types/game";
 import { shuffleTargetGrid } from "../utils/shuffleGrid";
@@ -15,6 +14,16 @@ import {
   moveGroupToBoard,
   moveReserveGroupToBoard,
 } from "../utils/floodFill";
+import {
+  hapticSelection,
+  hapticImpactLight,
+  hapticSuccess,
+  hapticError,
+} from "../utils/haptics";
+import {
+  buildPlacementSteps,
+  usePlacementAnimator,
+} from "./usePlacementAnimator";
 
 export const RESERVE_CAPACITY = 12;
 
@@ -79,33 +88,41 @@ export function useGame(
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const {
+    displayGrid,
+    displayReserve,
+    isAnimating: isPlacementAnimating,
+    activeFlights,
+    waitingSourcePositions,
+    waitingReserveIndices,
+    settlingDestinations,
+    handleFlightLand,
+    handleFlightDismiss,
+    handleFlightTakeoff,
+    startSequence,
+    cancelSequence,
+  } = usePlacementAnimator();
+
   const paletteOrder = level.palette.map((color) => color.id);
 
+  const triggerSelectionHaptic = useCallback(() => {
+    hapticSelection();
+  }, []);
+
   const triggerHaptic = useCallback(() => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {
-      // Ignore les erreurs haptiques.
-    }
+    hapticImpactLight();
   }, []);
 
   const triggerSuccessHaptic = useCallback(() => {
-    try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {
-      // Ignore les erreurs haptiques.
-    }
+    hapticSuccess();
   }, []);
 
   const triggerErrorHaptic = useCallback(() => {
-    try {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } catch {
-      // Ignore les erreurs haptiques.
-    }
+    hapticError();
   }, []);
 
   const initGame = useCallback(async () => {
+    cancelSequence();
     setIsVictory(false);
     setSelectedPositions([]);
     setSelectedReserveColorId(null);
@@ -155,7 +172,7 @@ export function useGame(
     }
 
     setIsInitialized(true);
-  }, [level, paletteOrder.join("|")]);
+  }, [level, paletteOrder.join("|"), cancelSequence]);
 
   useEffect(() => {
     initGame();
@@ -220,7 +237,7 @@ export function useGame(
 
   const handleCellTap = useCallback(
     (row: number, col: number) => {
-      if (isVictory) {
+      if (isVictory || isPlacementAnimating) {
         return;
       }
 
@@ -262,26 +279,32 @@ export function useGame(
 
         const nextMoves = moves + 1;
 
-        setGrid(boardMove.nextGrid);
-        setReserve(sortedReserve);
-        setMoves(nextMoves);
-        setSelectedPositions([]);
-
-        /*
-         * La couleur reste sélectionnée tant qu'il reste
-         * au moins une gemme identique dans la réserve.
-         */
         const stillHasSelectedColor = sortedReserve.some(
           (gemId) => gemId === selectedReserveColorId,
         );
 
-        setSelectedReserveColorId(
-          stillHasSelectedColor ? selectedReserveColorId : null,
-        );
+        setMoves(nextMoves);
 
-        triggerHaptic();
-
-        verifyStateAndSave(boardMove.nextGrid, sortedReserve, nextMoves);
+        startSequence({
+          initialGrid: grid.map((gridRow) => [...gridRow]),
+          initialReserve: [...reserve],
+          steps: buildPlacementSteps(
+            boardMove.placedPositions,
+            [],
+            selectedReserveColorId,
+            level.targetGrid,
+            boardMove.sourceReserveIndices,
+          ),
+          onComplete: () => {
+            setGrid(boardMove.nextGrid);
+            setReserve(sortedReserve);
+            setSelectedPositions([]);
+            setSelectedReserveColorId(
+              stillHasSelectedColor ? selectedReserveColorId : null,
+            );
+            verifyStateAndSave(boardMove.nextGrid, sortedReserve, nextMoves);
+          },
+        });
 
         return;
       }
@@ -298,7 +321,7 @@ export function useGame(
         if (isAlreadySelected) {
           setSelectedPositions([]);
           setSelectedReserveColorId(null);
-          triggerHaptic();
+          triggerSelectionHaptic();
           return;
         }
 
@@ -329,14 +352,23 @@ export function useGame(
         if (boardMove.movedGemIds.length > 0) {
           const nextMoves = moves + 1;
 
-          setGrid(boardMove.nextGrid);
           setMoves(nextMoves);
-          setSelectedPositions(boardMove.remainingSelectedPositions);
-          setSelectedReserveColorId(null);
 
-          triggerHaptic();
-
-          verifyStateAndSave(boardMove.nextGrid, reserve, nextMoves);
+          startSequence({
+            initialGrid: grid.map((gridRow) => [...gridRow]),
+            steps: buildPlacementSteps(
+              boardMove.placedPositions,
+              boardMove.sourcePositions,
+              selectedColor!,
+              level.targetGrid,
+            ),
+            onComplete: () => {
+              setGrid(boardMove.nextGrid);
+              setSelectedPositions(boardMove.remainingSelectedPositions);
+              setSelectedReserveColorId(null);
+              verifyStateAndSave(boardMove.nextGrid, reserve, nextMoves);
+            },
+          });
         } else {
           setSelectedPositions([]);
           setSelectedReserveColorId(null);
@@ -368,7 +400,7 @@ export function useGame(
 
         setSelectedPositions(group);
         setSelectedReserveColorId(null);
-        triggerHaptic();
+        triggerSelectionHaptic();
 
         return;
       }
@@ -382,17 +414,19 @@ export function useGame(
       selectedPositions,
       selectedReserveColorId,
       isVictory,
+      isPlacementAnimating,
       level.targetGrid,
       moves,
       paletteOrder,
-      triggerHaptic,
+      triggerSelectionHaptic,
       verifyStateAndSave,
+      startSequence,
     ],
   );
 
   const handleReserveTap = useCallback(
     (index: number) => {
-      if (isVictory) {
+      if (isVictory || isPlacementAnimating) {
         return;
       }
 
@@ -445,10 +479,11 @@ export function useGame(
       if (selectedGemId !== null) {
         if (selectedReserveColorId === selectedGemId) {
           setSelectedReserveColorId(null);
+          triggerSelectionHaptic();
         } else {
           setSelectedReserveColorId(selectedGemId);
           setSelectedPositions([]);
-          triggerHaptic();
+          triggerSelectionHaptic();
         }
       } else {
         setSelectedReserveColorId(null);
@@ -461,9 +496,11 @@ export function useGame(
       selectedPositions,
       selectedReserveColorId,
       isVictory,
+      isPlacementAnimating,
       moves,
       paletteOrder,
       triggerHaptic,
+      triggerSelectionHaptic,
       triggerErrorHaptic,
       verifyStateAndSave,
     ],
@@ -471,7 +508,7 @@ export function useGame(
 
   const moveGemToReserveHandler = useCallback(
     (row: number, col: number) => {
-      if (isVictory) {
+      if (isVictory || isPlacementAnimating) {
         return;
       }
 
@@ -531,6 +568,7 @@ export function useGame(
   );
 
   const restartLevel = useCallback(() => {
+    cancelSequence();
     clearActiveGameState();
 
     const shuffled = shuffleTargetGrid(level.targetGrid);
@@ -549,13 +587,32 @@ export function useGame(
 
     setPercentage(check.percentage);
     triggerHaptic();
-  }, [level, triggerHaptic]);
+  }, [level, triggerHaptic, cancelSequence]);
+
+  const renderGrid =
+    isPlacementAnimating && displayGrid !== null ? displayGrid : grid;
+
+  const renderReserve =
+    isPlacementAnimating && displayReserve !== null ? displayReserve : reserve;
+
+  const flyingReserveIndices = activeFlights
+    .map(({ step }) => step.reserveSourceIndex)
+    .filter((index): index is number => index !== undefined);
 
   return {
-    grid,
-    reserve,
+    grid: renderGrid,
+    reserve: renderReserve,
     selectedPositions,
     selectedReserveColorId,
+    isPlacementAnimating,
+    activeFlights,
+    waitingSourcePositions,
+    waitingReserveIndices,
+    settlingDestinations,
+    flyingReserveIndices,
+    handlePlacementFlightLand: handleFlightLand,
+    handlePlacementFlightDismiss: handleFlightDismiss,
+    handlePlacementFlightTakeoff: handleFlightTakeoff,
     moves,
     elapsedTime,
     isVictory,

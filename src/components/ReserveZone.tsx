@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Gem } from "./Gem";
 import { GemColor } from "../types/level";
 import { Inbox } from "lucide-react-native";
@@ -8,15 +8,82 @@ interface ReserveZoneProps {
   reserve: (string | null)[];
   paletteMap: Record<string, GemColor>;
   selectedReserveColorId: string | null;
+  waitingReserveIndices?: number[];
+  flyingReserveIndices?: number[];
+  onSlotRefRegister?: (index: number, node: View | null) => void;
   onSlotPress: (index: number) => void;
 }
 
 const SLOTS_PER_ROW = 6;
 
+interface ReserveSlotProps {
+  gemId: string | null;
+  index: number;
+  slotSize: number;
+  paletteMap: Record<string, GemColor>;
+  selectedReserveColorId: string | null;
+  isWaiting?: boolean;
+  isFlying?: boolean;
+  onSlotRefRegister?: (index: number, node: View | null) => void;
+  onSlotPress: (index: number) => void;
+}
+
+const ReserveSlot: React.FC<ReserveSlotProps> = ({
+  gemId,
+  index,
+  slotSize,
+  paletteMap,
+  selectedReserveColorId,
+  isWaiting = false,
+  isFlying = false,
+  onSlotRefRegister,
+  onSlotPress,
+}) => {
+  const gemColor = gemId ? (paletteMap[gemId] ?? null) : null;
+  const isSelected =
+    gemId !== null &&
+    (selectedReserveColorId === gemId || isWaiting);
+  const isDimmed =
+    selectedReserveColorId !== null && gemId !== null && !isSelected;
+
+  return (
+    <Pressable
+      ref={(node) => onSlotRefRegister?.(index, node)}
+      onPress={() => onSlotPress(index)}
+      style={[
+        styles.slotBox,
+        {
+          width: slotSize,
+          height: slotSize,
+          borderRadius: Math.round(slotSize * 0.2),
+          backgroundColor: gemColor
+            ? "transparent"
+            : "rgba(30, 41, 59, 0.6)",
+        },
+      ]}
+    >
+      {gemColor && !isFlying ? (
+        <Gem
+          colorHex={gemColor.hex}
+          size={slotSize - 4}
+          isSelected={isSelected}
+          isDimmed={isDimmed}
+          onPress={() => onSlotPress(index)}
+        />
+      ) : !gemColor ? (
+        <Text style={styles.emptyIndex}>{index + 1}</Text>
+      ) : null}
+    </Pressable>
+  );
+};
+
 export const ReserveZone: React.FC<ReserveZoneProps> = ({
   reserve,
   paletteMap,
   selectedReserveColorId,
+  waitingReserveIndices = [],
+  flyingReserveIndices = [],
+  onSlotRefRegister,
   onSlotPress,
 }) => {
   const occupiedCount = reserve.filter((item) => item !== null).length;
@@ -27,51 +94,6 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
   for (let index = 0; index < reserve.length; index += SLOTS_PER_ROW) {
     rows.push(reserve.slice(index, index + SLOTS_PER_ROW));
   }
-
-  const renderSlot = (gemId: string | null, index: number) => {
-    const gemColor = gemId ? (paletteMap[gemId] ?? null) : null;
-
-    /*
-     * Toutes les gemmes de la couleur choisie
-     * sont affichées comme sélectionnées.
-     */
-    const isSelected = gemId !== null && selectedReserveColorId === gemId;
-
-    const isDimmed =
-      selectedReserveColorId !== null && gemId !== null && !isSelected;
-
-    return (
-      <TouchableOpacity
-        key={`reserve-slot-${index}`}
-        activeOpacity={0.7}
-        onPress={() => onSlotPress(index)}
-        style={[
-          styles.slotBox,
-          {
-            width: slotSize,
-            height: slotSize,
-            borderRadius: Math.round(slotSize * 0.2),
-            borderColor: isSelected ? "#FBBF24" : "rgba(255, 255, 255, 0.15)",
-            backgroundColor: gemColor
-              ? "transparent"
-              : "rgba(30, 41, 59, 0.6)",
-          },
-        ]}
-      >
-        {gemColor ? (
-          <Gem
-            colorHex={gemColor.hex}
-            size={slotSize - 4}
-            isSelected={isSelected}
-            isDimmed={isDimmed}
-            onPress={() => onSlotPress(index)}
-          />
-        ) : (
-          <Text style={styles.emptyIndex}>{index + 1}</Text>
-        )}
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -90,9 +112,24 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
       <View style={styles.slotsGrid}>
         {rows.map((rowSlots, rowIndex) => (
           <View key={`reserve-row-${rowIndex}`} style={styles.slotsRow}>
-            {rowSlots.map((gemId, columnIndex) =>
-              renderSlot(gemId, rowIndex * SLOTS_PER_ROW + columnIndex),
-            )}
+            {rowSlots.map((gemId, columnIndex) => {
+              const slotIndex = rowIndex * SLOTS_PER_ROW + columnIndex;
+
+              return (
+                <ReserveSlot
+                  key={`reserve-slot-${slotIndex}`}
+                  gemId={gemId}
+                  index={slotIndex}
+                  slotSize={slotSize}
+                  paletteMap={paletteMap}
+                  selectedReserveColorId={selectedReserveColorId}
+                  isWaiting={waitingReserveIndices.includes(slotIndex)}
+                  isFlying={flyingReserveIndices.includes(slotIndex)}
+                  onSlotRefRegister={onSlotRefRegister}
+                  onSlotPress={onSlotPress}
+                />
+              );
+            })}
           </View>
         ))}
       </View>
@@ -154,9 +191,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 
-  /*
-   * Les 12 emplacements sont affichés sur deux lignes de 6.
-   */
   slotsGrid: {
     alignItems: "center",
     gap: 8,
@@ -172,9 +206,10 @@ const styles = StyleSheet.create({
   slotBox: {
     justifyContent: "center",
     alignItems: "center",
-
     borderWidth: 1.5,
     borderStyle: "dashed",
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    overflow: "visible",
   },
 
   emptyIndex: {

@@ -214,16 +214,30 @@ export function moveGroupToBoard(
   nextGrid: (string | null)[][];
   movedGemIds: string[];
   remainingSelectedPositions: CellPosition[];
+  placedPositions: CellPosition[];
+  sourcePositions: CellPosition[];
 } {
   if (selectedPositions.length === 0) {
-    return { nextGrid: grid, movedGemIds: [], remainingSelectedPositions: [] };
+    return {
+      nextGrid: grid,
+      movedGemIds: [],
+      remainingSelectedPositions: [],
+      placedPositions: [],
+      sourcePositions: [],
+    };
   }
 
   const firstPos = selectedPositions[0];
   const groupColor = grid[firstPos.row]?.[firstPos.col];
 
   if (!groupColor) {
-    return { nextGrid: grid, movedGemIds: [], remainingSelectedPositions: [] };
+    return {
+      nextGrid: grid,
+      movedGemIds: [],
+      remainingSelectedPositions: [],
+      placedPositions: [],
+      sourcePositions: [],
+    };
   }
 
   const selectedSet = new Set(
@@ -242,6 +256,8 @@ export function moveGroupToBoard(
       nextGrid: grid,
       movedGemIds: [],
       remainingSelectedPositions: selectedPositions,
+      placedPositions: [],
+      sourcePositions: [],
     };
   }
 
@@ -256,10 +272,12 @@ export function moveGroupToBoard(
   const remainingSelectedPositions: CellPosition[] = [];
 
   const movesCount = Math.min(selectedPositions.length, candidateSlots.length);
+  const placedPositions = candidateSlots.slice(0, movesCount);
+  const sourcePositions = selectedPositions.slice(0, movesCount);
 
   // Place gems into candidate slots
   for (let i = 0; i < movesCount; i++) {
-    const destSlot = candidateSlots[i];
+    const destSlot = placedPositions[i];
     nextGrid[destSlot.row][destSlot.col] = groupColor;
     movedGemIds.push(groupColor);
   }
@@ -275,6 +293,8 @@ export function moveGroupToBoard(
     nextGrid,
     movedGemIds,
     remainingSelectedPositions,
+    placedPositions,
+    sourcePositions,
   };
 }
 
@@ -292,6 +312,8 @@ export function moveReserveGroupToBoard(
   nextGrid: (string | null)[][];
   nextReserve: (string | null)[];
   placedCount: number;
+  placedPositions: CellPosition[];
+  sourceReserveIndices: number[];
 } {
   const candidateSlots = findBoardDestinationSlots(
     grid,
@@ -302,7 +324,13 @@ export function moveReserveGroupToBoard(
   );
 
   if (candidateSlots.length === 0) {
-    return { nextGrid: grid, nextReserve: reserve, placedCount: 0 };
+    return {
+      nextGrid: grid,
+      nextReserve: reserve,
+      placedCount: 0,
+      placedPositions: [],
+      sourceReserveIndices: [],
+    };
   }
 
   const availableInReserve = reserve.filter(
@@ -312,14 +340,22 @@ export function moveReserveGroupToBoard(
   const placeCount = Math.min(candidateSlots.length, availableInReserve);
 
   if (placeCount === 0) {
-    return { nextGrid: grid, nextReserve: reserve, placedCount: 0 };
+    return {
+      nextGrid: grid,
+      nextReserve: reserve,
+      placedCount: 0,
+      placedPositions: [],
+      sourceReserveIndices: [],
+    };
   }
 
   const nextGrid = grid.map((row) => [...row]);
   const nextReserve = [...reserve];
+  const placedPositions = candidateSlots.slice(0, placeCount);
+  const sourceReserveIndices: number[] = [];
 
   for (let index = 0; index < placeCount; index++) {
-    const slot = candidateSlots[index];
+    const slot = placedPositions[index];
     nextGrid[slot.row][slot.col] = colorId;
   }
 
@@ -331,10 +367,17 @@ export function moveReserveGroupToBoard(
     index++
   ) {
     if (nextReserve[index] === colorId) {
+      sourceReserveIndices.push(index);
       nextReserve[index] = null;
       removed++;
     }
   }
 
-  return { nextGrid, nextReserve, placedCount: placeCount };
+  return {
+    nextGrid,
+    nextReserve,
+    placedCount: placeCount,
+    placedPositions,
+    sourceReserveIndices,
+  };
 }

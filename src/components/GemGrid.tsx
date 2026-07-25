@@ -1,13 +1,12 @@
-import React, { useMemo } from "react";
-import {
-  View,
-  StyleSheet,
-  useWindowDimensions,
-  ScrollView,
-} from "react-native";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { View, StyleSheet, useWindowDimensions } from "react-native";
 import { GemSlot } from "./GemSlot";
 import { GemColor } from "../types/level";
 import { CellPosition } from "../types/game";
+import { useGridCellAnimations } from "../hooks/useGridCellAnimations";
+import { cellKey } from "../constants/motion";
+import { PlacementFlightGem } from "./PlacementFlightGem";
+import type { ActivePlacementFlight } from "../hooks/usePlacementAnimator";
 
 interface GemGridProps {
   rows: number;
@@ -16,6 +15,14 @@ interface GemGridProps {
   currentGrid: (string | null)[][];
   paletteMap: Record<string, GemColor>;
   selectedPositions: CellPosition[];
+  isPlacementAnimating?: boolean;
+  activeFlights?: ActivePlacementFlight[];
+  waitingSourcePositions?: CellPosition[];
+  settlingDestinations?: CellPosition[];
+  onPlacementFlightLand?: (stepIndex: number) => void;
+  onPlacementFlightDismiss?: (stepIndex: number) => void;
+  onCellRefRegister?: (row: number, col: number, node: View | null) => void;
+  onCellSizeChange?: (cellSize: number) => void;
   onCellPress: (row: number, col: number) => void;
   onCellLongPress?: (row: number, col: number) => void;
 }
@@ -27,10 +34,25 @@ export const GemGrid: React.FC<GemGridProps> = ({
   currentGrid,
   paletteMap,
   selectedPositions,
+  isPlacementAnimating = false,
+  activeFlights = [],
+  waitingSourcePositions = [],
+  settlingDestinations = [],
+  onPlacementFlightLand,
+  onPlacementFlightDismiss,
+  onCellRefRegister,
+  onCellSizeChange,
   onCellPress,
   onCellLongPress,
 }) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const cellRefs = useRef<Map<string, View>>(new Map());
+
+  const diffAnimations = useGridCellAnimations(
+    currentGrid,
+    targetGrid,
+    !isPlacementAnimating,
+  );
 
   const cellSize = useMemo(() => {
     const horizontalMargin = 32;
@@ -48,12 +70,31 @@ export const GemGrid: React.FC<GemGridProps> = ({
     return Math.max(18, Math.min(computed, 68));
   }, [windowWidth, windowHeight, rows, columns]);
 
+  useEffect(() => {
+    onCellSizeChange?.(cellSize);
+  }, [cellSize, onCellSizeChange]);
+
+  const registerCellRef = useCallback(
+    (row: number, col: number, node: View | null) => {
+      const key = cellKey(row, col);
+
+      if (node) {
+        cellRefs.current.set(key, node);
+      } else {
+        cellRefs.current.delete(key);
+      }
+
+      onCellRefRegister?.(row, col, node);
+    },
+    [onCellRefRegister],
+  );
+
+  const boardFlights = activeFlights.filter(
+    ({ step }) => step.reserveSourceIndex === undefined,
+  );
+
   return (
-    <ScrollView
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      bounces={false}
-    >
+    <View style={styles.gridWrapper}>
       <View style={styles.gridContainer}>
         {targetGrid.map((rowArray, rowIndex) => (
           <View key={`row-${rowIndex}`} style={styles.row}>
@@ -71,9 +112,23 @@ export const GemGrid: React.FC<GemGridProps> = ({
                 ? (paletteMap[currentColorId] ?? null)
                 : null;
 
-              const isSelected = selectedPositions.some(
+              const isSelected =
+                selectedPositions.some(
+                  (position) =>
+                    position.row === rowIndex && position.col === columnIndex,
+                ) ||
+                waitingSourcePositions.some(
+                  (position) =>
+                    position.row === rowIndex && position.col === columnIndex,
+                );
+
+              const isSettling = settlingDestinations.some(
                 (position) =>
                   position.row === rowIndex && position.col === columnIndex,
+              );
+
+              const animation = diffAnimations.get(
+                cellKey(rowIndex, columnIndex),
               );
 
               return (
@@ -84,6 +139,14 @@ export const GemGrid: React.FC<GemGridProps> = ({
                   currentColor={currentColor}
                   isSelected={isSelected}
                   isDimmed={false}
+                  placementPulseToken={animation?.pulseToken ?? 0}
+                  cascadeDelayMs={animation?.cascadeDelayMs ?? 0}
+                  entryRotationDeg={animation?.entryRotationDeg ?? 0}
+                  isCorrectPlacement={animation?.isCorrectPlacement ?? false}
+                  isSettling={isSettling}
+                  cellRef={(node) =>
+                    registerCellRef(rowIndex, columnIndex, node)
+                  }
                   onPress={() => onCellPress(rowIndex, columnIndex)}
                   onLongPress={() => onCellLongPress?.(rowIndex, columnIndex)}
                 />
@@ -92,15 +155,28 @@ export const GemGrid: React.FC<GemGridProps> = ({
           </View>
         ))}
       </View>
-    </ScrollView>
+
+      {onPlacementFlightLand &&
+        onPlacementFlightDismiss &&
+        boardFlights.map(({ stepIndex, step }) => (
+          <PlacementFlightGem
+            key={`flight-${stepIndex}`}
+            step={step}
+            stepIndex={stepIndex}
+            colorHex={paletteMap[step.colorId]?.hex ?? "#64748B"}
+            cellSize={cellSize}
+            onLand={onPlacementFlightLand}
+            onDismiss={onPlacementFlightDismiss}
+          />
+        ))}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
+  gridWrapper: {
+    position: "relative",
+    overflow: "visible",
   },
 
   gridContainer: {
@@ -121,12 +197,13 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
 
-    overflow: "hidden",
+    overflow: "visible",
   },
 
   row: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    overflow: "visible",
   },
 });

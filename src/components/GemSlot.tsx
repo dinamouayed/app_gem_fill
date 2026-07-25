@@ -1,7 +1,18 @@
-import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useEffect, memo } from "react";
+import { View, StyleSheet, Pressable } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { Gem } from "./Gem";
 import { GemColor } from "../types/level";
+import { MOTION } from "../constants/motion";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 interface GemSlotProps {
   size: number;
@@ -11,9 +22,120 @@ interface GemSlotProps {
   isDimmed?: boolean;
   onPress: () => void;
   onLongPress?: () => void;
+  placementPulseToken?: number;
+  cascadeDelayMs?: number;
+  entryRotationDeg?: number;
+  isCorrectPlacement?: boolean;
+  isSettling?: boolean;
+  cellRef?: (node: View | null) => void;
 }
 
-export const GemSlot: React.FC<GemSlotProps> = ({
+interface AnimatedCorrectGemProps {
+  size: number;
+  colorHex: string;
+  isDimmed: boolean;
+  onPress: () => void;
+  onLongPress?: () => void;
+  placementPulseToken?: number;
+  cascadeDelayMs?: number;
+}
+
+const AnimatedCorrectGem: React.FC<AnimatedCorrectGemProps> = ({
+  size,
+  colorHex,
+  isDimmed,
+  onPress,
+  onLongPress,
+  placementPulseToken = 0,
+  cascadeDelayMs = 0,
+}) => {
+  const scale = useSharedValue(1);
+  const flashOpacity = useSharedValue(0);
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    opacity.value = withTiming(isDimmed ? 0.45 : 1, {
+      duration: MOTION.DIM_DURATION_MS,
+    });
+  }, [isDimmed]);
+
+  useEffect(() => {
+    if (placementPulseToken <= 0) {
+      return;
+    }
+
+    const spring = MOTION.SPRING_PLACEMENT;
+
+    const snapAnimation = () => {
+      scale.value = withSequence(
+        withSpring(MOTION.PLACEMENT_COMPRESS, spring),
+        withSpring(MOTION.PLACEMENT_SCALE_PEAK, spring),
+        withSpring(1, spring),
+      );
+
+      flashOpacity.value = withSequence(
+        withTiming(0.45, { duration: 70 }),
+        withTiming(0, { duration: 130 }),
+      );
+    };
+
+    if (cascadeDelayMs > 0) {
+      scale.value = withDelay(
+        cascadeDelayMs,
+        withSequence(
+          withSpring(MOTION.PLACEMENT_COMPRESS, spring),
+          withSpring(MOTION.PLACEMENT_SCALE_PEAK, spring),
+          withSpring(1, spring),
+        ),
+      );
+
+      flashOpacity.value = withDelay(
+        cascadeDelayMs,
+        withSequence(
+          withTiming(0.45, { duration: 70 }),
+          withTiming(0, { duration: 130 }),
+        ),
+      );
+    } else {
+      snapAnimation();
+    }
+  }, [placementPulseToken]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  const flashStyle = useAnimatedStyle(() => ({
+    opacity: flashOpacity.value,
+  }));
+
+  return (
+    <AnimatedPressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={styles.fullHitArea}
+    >
+      <Animated.View
+        style={[
+          styles.correctGem,
+          {
+            width: size,
+            height: size,
+            backgroundColor: colorHex,
+          },
+          animatedStyle,
+        ]}
+      >
+        <View style={styles.correctGemHighlight} />
+        <View style={styles.correctGemInnerBorder} />
+        <Animated.View style={[styles.correctFlash, flashStyle]} />
+      </Animated.View>
+    </AnimatedPressable>
+  );
+};
+
+export const GemSlot: React.FC<GemSlotProps> = memo(({
   size,
   targetColor,
   currentColor,
@@ -21,31 +143,37 @@ export const GemSlot: React.FC<GemSlotProps> = ({
   isDimmed = false,
   onPress,
   onLongPress,
+  placementPulseToken = 0,
+  cascadeDelayMs = 0,
+  entryRotationDeg = 0,
+  isCorrectPlacement = false,
+  isSettling = false,
+  cellRef,
 }) => {
   const isMatch = currentColor?.id === targetColor.id;
+  const showAsMovableGem = !!currentColor && (!isMatch || isSettling);
 
-  /*
-   * La gemme incorrecte garde quasiment toute sa taille.
-   * La gemme correcte remplit davantage sa case afin de
-   * sembler intégrée au plateau.
-   */
   const movableGemSize = size - 4;
   const correctGemSize = size - 1;
 
+  const showEntryOnMovable =
+    placementPulseToken > 0 && !isCorrectPlacement && !isMatch;
+
   return (
     <View
+      ref={cellRef}
       style={[
         styles.slot,
         {
           width: size,
           height: size,
           backgroundColor: targetColor.hex,
+          zIndex: isSelected ? 10 : 0,
         },
       ]}
     >
       {!currentColor && (
-        <TouchableOpacity
-          activeOpacity={0.85}
+        <Pressable
           onPress={onPress}
           onLongPress={onLongPress}
           style={styles.fullHitArea}
@@ -71,47 +199,41 @@ export const GemSlot: React.FC<GemSlotProps> = ({
               ]}
             />
           </View>
-        </TouchableOpacity>
+        </Pressable>
       )}
 
-      {currentColor && !isMatch && (
+      {showAsMovableGem && (
         <Gem
-          colorHex={currentColor.hex}
+          colorHex={currentColor!.hex}
           size={movableGemSize}
           isSelected={isSelected}
           isDimmed={isDimmed}
           isCorrect={false}
+          settleInstant={isSettling}
           onPress={onPress}
           onLongPress={onLongPress}
+          placementPulseToken={showEntryOnMovable ? placementPulseToken : 0}
+          cascadeDelayMs={0}
+          entryRotationDeg={entryRotationDeg}
         />
       )}
 
-      {currentColor && isMatch && (
-        <TouchableOpacity
-          activeOpacity={1}
+      {currentColor && isMatch && !isSettling && (
+        <AnimatedCorrectGem
+          size={correctGemSize}
+          colorHex={currentColor.hex}
+          isDimmed={isDimmed}
           onPress={onPress}
           onLongPress={onLongPress}
-          style={styles.fullHitArea}
-        >
-          <View
-            style={[
-              styles.correctGem,
-              {
-                width: correctGemSize,
-                height: correctGemSize,
-                backgroundColor: currentColor.hex,
-              },
-              isDimmed && styles.dimmed,
-            ]}
-          >
-            <View style={styles.correctGemHighlight} />
-            <View style={styles.correctGemInnerBorder} />
-          </View>
-        </TouchableOpacity>
+          placementPulseToken={
+            isCorrectPlacement ? placementPulseToken : 0
+          }
+          cascadeDelayMs={cascadeDelayMs}
+        />
       )}
     </View>
   );
-};
+});
 
 const darkenHex = (hex: string, amount: number): string => {
   const normalizedHex = hex.replace("#", "");
@@ -138,15 +260,9 @@ const styles = StyleSheet.create({
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
-
-    /*
-     * Important :
-     * aucun margin et aucun arrondi.
-     * La couleur cible remplit donc toute la grille.
-     */
     margin: 0,
     borderRadius: 0,
-    overflow: "hidden",
+    overflow: "visible",
   },
 
   fullHitArea: {
@@ -181,22 +297,10 @@ const styles = StyleSheet.create({
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
-
-    /*
-     * Beaucoup moins arrondi qu'une gemme déplaçable.
-     * Elle paraît intégrée à la zone de couleur.
-     */
     borderRadius: 3,
-
-    /*
-     * Pas d'ombre extérieure : cela évite l'effet
-     * de pièce encore posée au-dessus du plateau.
-     */
-    shadowOpacity: 0,
-    elevation: 0,
-
     borderWidth: 1,
     borderColor: "rgba(0, 0, 0, 0.18)",
+    overflow: "hidden",
   },
 
   correctGemHighlight: {
@@ -220,7 +324,8 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255, 255, 255, 0.2)",
   },
 
-  dimmed: {
-    opacity: 0.45,
+  correctFlash: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
 });

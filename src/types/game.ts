@@ -3,7 +3,15 @@ export type CellPosition = {
   col: number;
 };
 
-export type GemLocation = 
+export type PlacementStep = {
+  dest: CellPosition;
+  source?: CellPosition;
+  reserveSourceIndex?: number;
+  colorId: string;
+  isCorrect: boolean;
+};
+
+export type GemLocation =
   | { type: 'grid'; row: number; col: number }
   | { type: 'reserve'; index: number };
 
