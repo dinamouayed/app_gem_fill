@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { Gem } from "./Gem";
+import { GemVisual } from "./GemVisual";
 import { GemColor } from "../types/level";
 import { MOTION } from "../constants/motion";
 
@@ -117,19 +118,23 @@ const AnimatedCorrectGem: React.FC<AnimatedCorrectGemProps> = ({
       hitSlop={6}
       style={styles.fullHitArea}
     >
-      <Animated.View
-        style={[
-          styles.correctGem,
-          {
-            width: size,
-            height: size,
-            backgroundColor: colorHex,
-          },
-          animatedStyle,
-        ]}
-      >
-        <View style={styles.correctGemInnerBorder} />
-        <Animated.View style={[styles.correctFlash, flashStyle]} />
+      <Animated.View style={animatedStyle}>
+        <View style={styles.correctGemWrapper}>
+          <GemVisual colorHex={colorHex} size={size} variant="correct" />
+
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.correctFlash,
+              {
+                width: size,
+                height: size,
+                borderRadius: Math.max(4, Math.round(size * 0.22)),
+              },
+              flashStyle,
+            ]}
+          />
+        </View>
       </Animated.View>
     </AnimatedPressable>
   );
@@ -153,8 +158,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
   const isMatch = currentColor?.id === targetColor.id;
   const showAsMovableGem = !!currentColor && (!isMatch || isSettling);
 
-  const movableGemSize = size - 4;
-  const correctGemSize = size - 1;
+  const gemSize = Math.max(12, size - 2);
 
   const showEntryOnMovable =
     placementPulseToken > 0 && !isCorrectPlacement && !isMatch;
@@ -167,7 +171,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
         {
           width: size,
           height: size,
-          backgroundColor: targetColor.hex,
+          backgroundColor: "transparent",
           zIndex: isSelected ? 10 : 0,
         },
       ]}
@@ -183,9 +187,9 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
             style={[
               styles.hole,
               {
-                width: movableGemSize,
-                height: movableGemSize,
-                borderRadius: Math.max(3, Math.round(movableGemSize * 0.16)),
+                width: gemSize,
+                height: gemSize,
+                borderRadius: Math.max(3, Math.round(gemSize * 0.16)),
                 backgroundColor: darkenHex(targetColor.hex, 0.3),
               },
             ]}
@@ -194,7 +198,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
               style={[
                 styles.holeInner,
                 {
-                  borderRadius: Math.max(2, Math.round(movableGemSize * 0.12)),
+                  borderRadius: Math.max(2, Math.round(gemSize * 0.12)),
                   backgroundColor: darkenHex(targetColor.hex, 0.18),
                 },
               ]}
@@ -212,7 +216,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
         >
           <Gem
             colorHex={currentColor!.hex}
-            size={movableGemSize}
+            size={gemSize}
             isSelected={isSelected}
             isDimmed={isDimmed}
             isCorrect={false}
@@ -227,7 +231,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
 
       {currentColor && isMatch && !isSettling && (
         <AnimatedCorrectGem
-          size={correctGemSize}
+          size={gemSize}
           colorHex={currentColor.hex}
           isDimmed={isDimmed}
           onPress={onPress}
@@ -300,29 +304,14 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
 
-  correctGem: {
+  correctGemWrapper: {
     position: "relative",
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 3,
-    borderWidth: 1,
-    borderColor: "rgba(0, 0, 0, 0.18)",
-    overflow: "hidden",
-  },
-
-  correctGemInnerBorder: {
-    position: "absolute",
-    top: 2,
-    right: 2,
-    bottom: 2,
-    left: 2,
-    borderRadius: 2,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
   },
 
   correctFlash: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
     backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
 });

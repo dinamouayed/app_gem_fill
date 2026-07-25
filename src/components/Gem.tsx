@@ -9,8 +9,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 import { MOTION } from "../constants/motion";
+import { GemVisual } from "./GemVisual";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -27,27 +27,6 @@ export interface GemProps {
   cascadeDelayMs?: number;
   entryRotationDeg?: number;
   settleInstant?: boolean;
-}
-
-function adjustColor(hex: string, percent: number): string {
-  const num = parseInt(hex.replace("#", ""), 16);
-
-  if (Number.isNaN(num)) {
-    return hex;
-  }
-
-  let red = (num >> 16) + percent;
-  let green = ((num >> 8) & 0x00ff) + percent;
-  let blue = (num & 0x0000ff) + percent;
-
-  red = Math.min(255, Math.max(0, red));
-  green = Math.min(255, Math.max(0, green));
-  blue = Math.min(255, Math.max(0, blue));
-
-  return (
-    "#" +
-    ((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)
-  );
 }
 
 export const Gem: React.FC<GemProps> = ({
@@ -69,10 +48,6 @@ export const Gem: React.FC<GemProps> = ({
   const rotate = useSharedValue(0);
   const opacity = useSharedValue(1);
   const flashOpacity = useSharedValue(0);
-
-  const lightHex = adjustColor(colorHex, 45);
-  const darkHex = adjustColor(colorHex, -40);
-  const borderRadius = Math.max(4, Math.round(size * 0.22));
 
   useEffect(() => {
     if (settleInstant) {
@@ -163,27 +138,27 @@ export const Gem: React.FC<GemProps> = ({
     opacity: flashOpacity.value,
   }));
 
-  const defaultBorderColor = isCorrect
-    ? "rgba(255,255,255,0.4)"
-    : "rgba(255,255,255,0.15)";
+  const gemVariant = isSelected
+    ? "selected"
+    : isCorrect
+      ? "correct"
+      : "default";
 
   const gemContent = (
-    <View
-      style={[
-        styles.gemBody,
-        { borderRadius, borderColor: defaultBorderColor },
-      ]}
-    >
-      <LinearGradient
-        colors={[lightHex, colorHex, darkHex]}
-        start={{ x: 0.1, y: 0.1 }}
-        end={{ x: 0.9, y: 0.9 }}
-        style={[StyleSheet.absoluteFill, { borderRadius }]}
-      />
+    <View style={styles.gemWrapper}>
+      <GemVisual colorHex={colorHex} size={size} variant={gemVariant} />
 
       <Animated.View
         pointerEvents="none"
-        style={[styles.flashOverlay, { borderRadius }, flashStyle]}
+        style={[
+          styles.flashOverlay,
+          {
+            width: size,
+            height: size,
+            borderRadius: Math.max(4, Math.round(size * 0.22)),
+          },
+          flashStyle,
+        ]}
       />
     </View>
   );
@@ -215,18 +190,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  gemBody: {
-    width: "100%",
-    height: "100%",
-    justifyContent: "flex-start",
-    alignItems: "flex-start",
-    padding: 2,
-    overflow: "hidden",
-    borderWidth: 1.5,
+  gemWrapper: {
+    position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
   flashOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
     backgroundColor: "rgba(255, 255, 255, 0.55)",
   },
 });

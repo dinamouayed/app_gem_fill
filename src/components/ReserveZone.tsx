@@ -65,7 +65,7 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
       {gemColor && !isFlying ? (
         <Gem
           colorHex={gemColor.hex}
-          size={slotSize - 4}
+          size={Math.max(12, slotSize - 2)}
           isSelected={isSelected}
           isDimmed={isDimmed}
           interactive={false}
