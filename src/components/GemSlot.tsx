@@ -158,7 +158,8 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
   const isMatch = currentColor?.id === targetColor.id;
   const showAsMovableGem = !!currentColor && (!isMatch || isSettling);
 
-  const gemSize = Math.max(12, size - 2);
+  const movableGemSize = Math.max(12, size - 2);
+  const settledGemSize = Math.max(12, size);
 
   const showEntryOnMovable =
     placementPulseToken > 0 && !isCorrectPlacement && !isMatch;
@@ -171,7 +172,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
         {
           width: size,
           height: size,
-          backgroundColor: "transparent",
+          backgroundColor: targetColor.hex,
           zIndex: isSelected ? 10 : 0,
         },
       ]}
@@ -187,9 +188,9 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
             style={[
               styles.hole,
               {
-                width: gemSize,
-                height: gemSize,
-                borderRadius: Math.max(3, Math.round(gemSize * 0.16)),
+                width: movableGemSize,
+                height: movableGemSize,
+                borderRadius: Math.max(3, Math.round(movableGemSize * 0.16)),
                 backgroundColor: darkenHex(targetColor.hex, 0.3),
               },
             ]}
@@ -198,7 +199,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
               style={[
                 styles.holeInner,
                 {
-                  borderRadius: Math.max(2, Math.round(gemSize * 0.12)),
+                  borderRadius: Math.max(2, Math.round(movableGemSize * 0.12)),
                   backgroundColor: darkenHex(targetColor.hex, 0.18),
                 },
               ]}
@@ -216,7 +217,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
         >
           <Gem
             colorHex={currentColor!.hex}
-            size={gemSize}
+            size={movableGemSize}
             isSelected={isSelected}
             isDimmed={isDimmed}
             isCorrect={false}
@@ -231,7 +232,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
 
       {currentColor && isMatch && !isSettling && (
         <AnimatedCorrectGem
-          size={gemSize}
+          size={settledGemSize}
           colorHex={currentColor.hex}
           isDimmed={isDimmed}
           onPress={onPress}
