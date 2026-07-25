@@ -22,6 +22,12 @@ import numpy as np
 from PIL import Image
 from sklearn.cluster import KMeans
 
+from color_distance import (
+    MIN_PALETTE_DELTA_E,
+    PaletteContrastError,
+    validate_palette_separation,
+)
+
 MIN_COLORS = 2
 MAX_COLORS = 10
 DEFAULT_MAX_COLS = 14
@@ -31,6 +37,7 @@ MAX_GRID_CELLS = 196
 CROP_COLOR_TOLERANCE = 35
 UNIFORM_EDGE_THRESHOLD = 0.9
 MAX_DOMINANT_COLOR_RATIO = 0.5
+MAX_START_CORRECT_PERCENT = 20
 
 
 class DominantColorError(ValueError):
@@ -51,6 +58,23 @@ class DominantColorError(ValueError):
         detail = f" (index {color_index})" if color_index is not None else ""
         super().__init__(
             f"Couleur dominante{detail}: {pct:.1f}% de la grille (> {limit:.0f}% max)."
+        )
+
+
+class ShuffleDifficultyError(ValueError):
+    """Raised when the shuffled start state has too many gems already correct."""
+
+    def __init__(
+        self,
+        percent: float,
+        *,
+        max_percent: float = MAX_START_CORRECT_PERCENT,
+    ) -> None:
+        self.percent = percent
+        self.max_percent = max_percent
+        super().__init__(
+            f"Trop de gemmes déjà bien placées au départ: {percent:.1f}% "
+            f"(> {max_percent:.0f}% max)."
         )
 
 
@@ -227,6 +251,20 @@ def validate_color_balance(
     ratio, color_index = get_max_color_ratio(label_grid)
     if ratio > max_ratio:
         raise DominantColorError(ratio, max_ratio=max_ratio, color_index=color_index)
+
+
+def validate_shuffle_difficulty(
+    target_grid: list[list[str]],
+    level_id: int,
+    max_percent: float = MAX_START_CORRECT_PERCENT,
+) -> float:
+    """Reject grids whose shuffled start exceeds the max correct gem percentage."""
+    from shuffle_grid import get_initial_correct_percent
+
+    percent = get_initial_correct_percent(target_grid, level_id)
+    if percent > max_percent:
+        raise ShuffleDifficultyError(percent, max_percent=max_percent)
+    return percent
 
 
 def prepare_image_for_level(image: Image.Image, *, crop: bool = True) -> Image.Image:
@@ -597,6 +635,8 @@ def generate_level_from_image(
     crop: bool = True,
     trim_edges: bool = False,
     max_dominant_ratio: float | None = MAX_DOMINANT_COLOR_RATIO,
+    max_start_correct_percent: float | None = MAX_START_CORRECT_PERCENT,
+    min_palette_delta_e: float | None = MIN_PALETTE_DELTA_E,
 ) -> LevelData:
     path = resolve_image_path(Path(image_path))
 
@@ -623,6 +663,16 @@ def generate_level_from_image(
     palette = build_palette(centroids)
     target_grid = build_target_grid(label_grid)
     target_grid, palette = remap_palette_ids(target_grid, palette)
+
+    if max_start_correct_percent is not None:
+        validate_shuffle_difficulty(
+            target_grid,
+            level_id,
+            max_percent=max_start_correct_percent,
+        )
+
+    if min_palette_delta_e is not None:
+        validate_palette_separation(palette, min_delta_e=min_palette_delta_e)
 
     final_difficulty = difficulty or infer_difficulty(
         final_rows, final_cols, len(palette)
@@ -753,6 +803,24 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
             f"Défaut: {MAX_DOMINANT_COLOR_RATIO}. Utiliser 1 pour désactiver."
         ),
     )
+    parser.add_argument(
+        "--max-start-correct",
+        type=float,
+        default=MAX_START_CORRECT_PERCENT,
+        help=(
+            "Pourcentage max de gemmes déjà bien placées au départ. "
+            f"Défaut: {MAX_START_CORRECT_PERCENT}. Utiliser 100 pour désactiver."
+        ),
+    )
+    parser.add_argument(
+        "--min-palette-delta-e",
+        type=float,
+        default=MIN_PALETTE_DELTA_E,
+        help=(
+            "Distance minimale ΔE (CIE76) entre chaque paire de couleurs. "
+            f"Défaut: {MIN_PALETTE_DELTA_E}. Utiliser 0 pour désactiver."
+        ),
+    )
     return parser.parse_args(list(argv) if argv is not None else None)
 
 
@@ -782,6 +850,14 @@ def main(argv: Iterable[str] | None = None) -> int:
     if max_dominant_ratio >= 1:
         max_dominant_ratio = None
 
+    max_start_correct = args.max_start_correct
+    if max_start_correct >= 100:
+        max_start_correct = None
+
+    min_palette_delta_e = args.min_palette_delta_e
+    if min_palette_delta_e <= 0:
+        min_palette_delta_e = None
+
     level = generate_level_from_image(
         image_path,
         level_id=level_id,
@@ -791,6 +867,8 @@ def main(argv: Iterable[str] | None = None) -> int:
         color_count=args.colors,
         max_colors=args.max_colors,
         max_dominant_ratio=max_dominant_ratio,
+        max_start_correct_percent=max_start_correct,
+        min_palette_delta_e=min_palette_delta_e,
     )
 
     output_path = Path(args.output) if args.output else repo_root / f"src/data/levels/level{level.id}.ts"

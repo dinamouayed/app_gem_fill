@@ -1,5 +1,4 @@
 import { useCallback, useReducer, useRef } from "react";
-import { computeCascadeStepDelay } from "../constants/motion";
 import type { CellPosition, PlacementStep } from "../types/game";
 import { hapticSelection } from "../utils/haptics";
 
@@ -192,12 +191,6 @@ export function usePlacementAnimator() {
 
   const sequenceRef = useRef<PlacementSequenceConfig | null>(null);
   const completedCountRef = useRef(0);
-  const launchTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-
-  const clearLaunchTimeouts = useCallback(() => {
-    launchTimeoutsRef.current.forEach(clearTimeout);
-    launchTimeoutsRef.current = [];
-  }, []);
 
   const finishSequence = useCallback(() => {
     const sequence = sequenceRef.current;
@@ -209,10 +202,9 @@ export function usePlacementAnimator() {
     sequence.onComplete();
     sequenceRef.current = null;
     completedCountRef.current = 0;
-    clearLaunchTimeouts();
 
     dispatch({ type: "finish" });
-  }, [clearLaunchTimeouts]);
+  }, []);
 
   const handleFlightLand = useCallback((stepIndex: number) => {
     const sequence = sequenceRef.current;
@@ -289,33 +281,23 @@ export function usePlacementAnimator() {
         return;
       }
 
-      clearLaunchTimeouts();
-
       sequenceRef.current = config;
       completedCountRef.current = 0;
 
       dispatch({ type: "start", config });
 
-      const staggerDelay = computeCascadeStepDelay(config.steps.length);
-
       config.steps.forEach((_, index) => {
-        const timeout = setTimeout(() => {
-          launchFlight(index);
-        }, index * staggerDelay);
-
-        launchTimeoutsRef.current.push(timeout);
+        launchFlight(index);
       });
     },
-    [clearLaunchTimeouts, launchFlight],
+    [launchFlight],
   );
 
   const cancelSequence = useCallback(() => {
-    clearLaunchTimeouts();
-
     sequenceRef.current = null;
     completedCountRef.current = 0;
     dispatch({ type: "cancel" });
-  }, [clearLaunchTimeouts]);
+  }, []);
 
   return {
     displayGrid: state.displayGrid,

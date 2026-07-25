@@ -3,24 +3,24 @@
  * pour toutes les micro-interactions du jeu.
  */
 export const MOTION = {
-  /** ~150-200 ms ressenti via spring */
+  /** ~80-120 ms ressenti via spring */
   SPRING_SELECTION: {
-    damping: 18,
-    stiffness: 280,
-    mass: 0.8,
+    damping: 16,
+    stiffness: 420,
+    mass: 0.55,
   },
 
   SPRING_DESELECT: {
-    damping: 20,
-    stiffness: 260,
-    mass: 0.8,
+    damping: 18,
+    stiffness: 380,
+    mass: 0.55,
   },
 
-  /** Rebond à la pose (~150-250 ms) */
+  /** Rebond à la pose (~100-150 ms) */
   SPRING_PLACEMENT: {
-    damping: 12,
-    stiffness: 320,
-    mass: 0.7,
+    damping: 11,
+    stiffness: 420,
+    mass: 0.55,
   },
 
   SPRING_FLOAT: {
@@ -30,10 +30,10 @@ export const MOTION = {
   },
 
   /** Vol d'une gem vers sa case — chevauchement autorisé */
-  FLIGHT_DURATION_MS: 180,
+  FLIGHT_DURATION_MS: 110,
 
   /** Progression (0–1) à laquelle la gem est posée sous le vol en fondu */
-  FLIGHT_LAND_AT_PROGRESS: 0.88,
+  FLIGHT_LAND_AT_PROGRESS: 0.85,
 
   SPRING_FLIGHT: {
     damping: 28,
@@ -41,21 +41,22 @@ export const MOTION = {
     mass: 0.6,
   },
 
-  SELECTED_SCALE: 1.05,
-  SELECTED_TRANSLATE_Y: -8,
+  /** Pas de scale à la sélection — évite le flou au zoom (transforms imbriqués). */
+  SELECTED_SCALE: 1,
+  SELECTED_TRANSLATE_Y: -6,
 
   PLACEMENT_SCALE_PEAK: 1.08,
   PLACEMENT_COMPRESS: 0.94,
 
-  CASCADE_DELAY_MS: 20,
-  PLACEMENT_FLASH_MS: 200,
-  DIM_DURATION_MS: 180,
+  CASCADE_DELAY_MS: 0,
+  PLACEMENT_FLASH_MS: 120,
+  DIM_DURATION_MS: 100,
 
   /** Décalage entre le départ de chaque gem (vols en parallèle) */
   PLACEMENT_CASCADE: {
-    MIN_STEP_MS: 40,
-    MAX_STEP_MS: 58,
-    MAX_TOTAL_MS: 360,
+    MIN_STEP_MS: 0,
+    MAX_STEP_MS: 0,
+    MAX_TOTAL_MS: 0,
   },
 
   FLOAT_AMPLITUDE: 1.5,
@@ -68,13 +69,13 @@ export const MOTION = {
   },
 
   SHADOW_SELECTED: {
-    offsetY: 8,
-    radius: 12,
-    opacity: 0.48,
+    offsetY: 3,
+    radius: 4,
+    opacity: 0.35,
   },
 
-  SELECTED_ELEVATION: 12,
-  DEFAULT_ELEVATION: 5,
+  SELECTED_ELEVATION: 0,
+  DEFAULT_ELEVATION: 0,
 } as const;
 
 /** Padding interne de la grille (aligné avec GemGrid) */
@@ -104,7 +105,7 @@ export const computeCascadeStepDelay = (gemCount: number): number => {
   }
 
   const { MIN_STEP_MS, MAX_STEP_MS, MAX_TOTAL_MS } = MOTION.PLACEMENT_CASCADE;
-  const ideal = MAX_TOTAL_MS / gemCount;
+  const ideal = MAX_TOTAL_MS / (gemCount - 1);
 
   return Math.round(Math.min(MAX_STEP_MS, Math.max(MIN_STEP_MS, ideal)));
 };

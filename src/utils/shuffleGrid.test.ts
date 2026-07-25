@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { level57 } from "../data/levels/level57";
+import { level8 } from "../data/levels/level8";
 import { isShuffledGridSolvable } from "./levelValidation";
 import { shuffleTargetGrid } from "./shuffleGrid";
 import { hasMatchingColorCounts } from "./validateGrid";
@@ -28,8 +28,8 @@ describe("shuffleTargetGrid", () => {
     expect(isIdentical).toBe(false);
   });
 
-  it("keeps mushroom levels solvable after shuffle", () => {
-    const shuffled = shuffleTargetGrid(level57.targetGrid, 57);
-    expect(isShuffledGridSolvable(shuffled, level57)).toBe(true);
+  it("keeps generated levels solvable after shuffle", () => {
+    const shuffled = shuffleTargetGrid(level8.targetGrid, 8);
+    expect(isShuffledGridSolvable(shuffled, level8)).toBe(true);
   });
 });

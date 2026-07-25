@@ -114,6 +114,7 @@ const AnimatedCorrectGem: React.FC<AnimatedCorrectGemProps> = ({
     <AnimatedPressable
       onPress={onPress}
       onLongPress={onLongPress}
+      hitSlop={6}
       style={styles.fullHitArea}
     >
       <Animated.View
@@ -176,6 +177,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
         <Pressable
           onPress={onPress}
           onLongPress={onLongPress}
+          hitSlop={6}
           style={styles.fullHitArea}
         >
           <View
@@ -203,19 +205,25 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
       )}
 
       {showAsMovableGem && (
-        <Gem
-          colorHex={currentColor!.hex}
-          size={movableGemSize}
-          isSelected={isSelected}
-          isDimmed={isDimmed}
-          isCorrect={false}
-          settleInstant={isSettling}
+        <Pressable
           onPress={onPress}
           onLongPress={onLongPress}
-          placementPulseToken={showEntryOnMovable ? placementPulseToken : 0}
-          cascadeDelayMs={0}
-          entryRotationDeg={entryRotationDeg}
-        />
+          hitSlop={6}
+          style={styles.fullHitArea}
+        >
+          <Gem
+            colorHex={currentColor!.hex}
+            size={movableGemSize}
+            isSelected={isSelected}
+            isDimmed={isDimmed}
+            isCorrect={false}
+            interactive={false}
+            settleInstant={isSettling}
+            placementPulseToken={showEntryOnMovable ? placementPulseToken : 0}
+            cascadeDelayMs={0}
+            entryRotationDeg={entryRotationDeg}
+          />
+        </Pressable>
       )}
 
       {currentColor && isMatch && !isSettling && (

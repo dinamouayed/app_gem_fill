@@ -13,8 +13,10 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw
 
+from color_distance import PaletteContrastError
 from generate_level import (
     DominantColorError,
+    ShuffleDifficultyError,
     export_level_typescript,
     generate_level_from_image,
     register_level_in_index,
@@ -22,8 +24,10 @@ from generate_level import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 GENERATED_DIR = REPO_ROOT / "assets/source/generated"
-DEFAULT_UNIT_FACTOR = 0.58
-MAX_GENERATION_ATTEMPTS = 120
+DEFAULT_UNIT_FACTOR = 0.62
+MAX_GENERATION_ATTEMPTS = 150
+# Themes from index 32 onward match the style the user preferred (levels 42+).
+PREFERRED_THEME_OFFSET = 32
 
 THEMES: list[tuple[str, str]] = [
     ("Cœur Rubis", "heart"),
@@ -83,21 +87,17 @@ def _canvas(width: int, height: int, bg: tuple[int, int, int]) -> Image.Image:
     return Image.new("RGB", (width, height), bg)
 
 
-def _draw_textured_background(
+def _draw_sky_and_ground(
     draw: ImageDraw.ImageDraw,
     width: int,
     height: int,
-    bg: tuple[int, int, int],
-    c2: tuple[int, int, int],
-    c3: tuple[int, int, int],
+    sky: tuple[int, int, int],
+    ground: tuple[int, int, int],
 ) -> None:
-    """Use a 3-tone checkerboard so backgrounds stay balanced after quantization."""
-    cell = max(16, min(width, height) // 16)
-    for y in range(0, height, cell):
-        for x in range(0, width, cell):
-            tone = ((x // cell) + (y // cell)) % 3
-            color = (bg, c2, c3)[tone]
-            draw.rectangle((x, y, x + cell, y + cell), fill=color)
+    """Simple sky / ground split — no checkerboard pattern."""
+    horizon = int(height * 0.68)
+    draw.rectangle((0, 0, width, horizon), fill=sky)
+    draw.rectangle((0, horizon, width, height), fill=ground)
 
 
 def _draw_pattern(
@@ -122,7 +122,7 @@ def _draw_pattern(
     bg, c1, c2, c3 = rng.choice(palettes)
     img = _canvas(width, height, bg)
     draw = ImageDraw.Draw(img)
-    _draw_textured_background(draw, width, height, bg, c2, c3)
+    _draw_sky_and_ground(draw, width, height, bg, c2)
     cx, cy = width // 2, height // 2
     unit = int(min(width, height) * unit_factor)
 
@@ -399,14 +399,16 @@ def generate_balanced_level(
     colors: int,
     grid_size: int = 14,
 ):
-    """Try several seeds / scales until no color exceeds 50% of the grid."""
+    """Try several seeds / scales until color balance and shuffle difficulty pass."""
     from collections import Counter
 
     last_ratio = 1.0
+    last_shuffle = 100.0
+    last_delta_e = 0.0
 
     for attempt in range(MAX_GENERATION_ATTEMPTS):
         attempt_seed = base_seed + attempt * 131
-        unit_factor = min(0.88, DEFAULT_UNIT_FACTOR + (attempt // 15) * 0.06)
+        unit_factor = min(0.88, DEFAULT_UNIT_FACTOR + (attempt // 15) * 0.05)
         color_count = max(4, min(7, colors + (attempt % 3) - 1))
 
         image = _draw_pattern(
@@ -433,14 +435,27 @@ def generate_balanced_level(
             )
             counts = Counter(cell for row in level.target_grid for cell in row)
             ratio = max(counts.values()) / sum(counts.values())
-            return level, attempt_seed, ratio
+            from shuffle_grid import get_initial_correct_percent
+
+            shuffle_pct = get_initial_correct_percent(level.target_grid, level_id)
+            from color_distance import min_palette_delta_e
+
+            delta_e, _ = min_palette_delta_e(color["hex"] for color in level.palette)
+            return level, attempt_seed, ratio, shuffle_pct, delta_e
         except DominantColorError as exc:
             last_ratio = exc.ratio
             continue
+        except ShuffleDifficultyError as exc:
+            last_shuffle = exc.percent
+            continue
+        except PaletteContrastError as exc:
+            last_delta_e = exc.delta_e
+            continue
 
     raise RuntimeError(
-        f"Impossible de générer {name} (niveau {level_id}, motif {kind}) "
-        f"sous 50% — meilleur essai: {last_ratio * 100:.1f}%."
+        f"Impossible de générer {name} (niveau {level_id}, motif {kind}) — "
+        f"meilleur essai: couleur max {last_ratio * 100:.1f}%, "
+        f"départ correct {last_shuffle:.1f}%, ΔE min {last_delta_e:.1f}."
     )
 
 
@@ -459,7 +474,7 @@ def generate_batch(
 
     for offset in range(count):
         level_id = first_id + offset
-        theme_index = offset % len(THEMES)
+        theme_index = (PREFERRED_THEME_OFFSET + offset) % len(THEMES)
         existing_name = read_existing_level_name(level_id, levels_dir) if regenerate else None
 
         seed = level_id * 997 + offset
@@ -470,20 +485,20 @@ def generate_batch(
 
         level = None
         dominant_ratio = 1.0
+        shuffle_percent = 100.0
+        min_delta_e = 0.0
         used_name = ""
         used_kind = ""
 
         for theme_shift in range(len(THEMES)):
             candidate_index = (theme_index + theme_shift) % len(THEMES)
             candidate_name, candidate_kind = THEMES[candidate_index]
-            name = existing_name or candidate_name
-            if existing_name and theme_shift > 0:
-                name = candidate_name
-            elif offset >= len(THEMES):
-                name = f"{candidate_name} {offset // len(THEMES) + 1}"
+            name = candidate_name
+            if existing_name and theme_shift == 0:
+                name = existing_name
 
             try:
-                level, _, dominant_ratio = generate_balanced_level(
+                level, _, dominant_ratio, shuffle_percent, min_delta_e = generate_balanced_level(
                     image_path,
                     level_id=level_id,
                     name=name,
@@ -501,7 +516,7 @@ def generate_batch(
         if level is None:
             raise RuntimeError(
                 f"Aucun motif valide trouvé pour le niveau {level_id} "
-                f"(couleur dominante > 50%)."
+                f"(couleur dominante > 50% ou départ > 20%)."
             )
 
         output_path = levels_dir / f"level{level_id}.ts"
@@ -510,7 +525,8 @@ def generate_batch(
         print(
             f"✓ Niveau {level_id:02d} — {used_name} "
             f"({level.rows}x{level.columns}, {len(level.palette)} couleurs, "
-            f"max couleur {dominant_ratio * 100:.1f}%, motif {used_kind})"
+            f"max couleur {dominant_ratio * 100:.1f}%, "
+            f"départ {shuffle_percent:.1f}%, ΔE min {min_delta_e:.1f}, motif {used_kind})"
         )
 
     register_level_in_index(created_ids[-1], index_path, levels_dir)

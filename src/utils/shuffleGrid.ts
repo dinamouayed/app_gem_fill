@@ -3,7 +3,7 @@ import { checkGridState, hasMatchingColorCounts } from "./validateGrid";
 type Grid = string[][];
 type Cell = { row: number; col: number };
 
-const MAX_START_CORRECT_PERCENT = 35;
+const MAX_START_CORRECT_PERCENT = 20;
 
 function createSeededRandom(seed: number): () => number {
   let state = seed >>> 0;

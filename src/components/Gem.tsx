@@ -68,15 +68,6 @@ export const Gem: React.FC<GemProps> = ({
   const translateY = useSharedValue(settleInstant ? 0 : 0);
   const rotate = useSharedValue(0);
   const opacity = useSharedValue(1);
-  const shadowOpacity = useSharedValue<number>(
-    settleInstant ? MOTION.SHADOW_DEFAULT.opacity : MOTION.SHADOW_DEFAULT.opacity,
-  );
-  const shadowRadius = useSharedValue<number>(
-    settleInstant ? MOTION.SHADOW_DEFAULT.radius : MOTION.SHADOW_DEFAULT.radius,
-  );
-  const shadowOffsetY = useSharedValue<number>(
-    settleInstant ? MOTION.SHADOW_DEFAULT.offsetY : MOTION.SHADOW_DEFAULT.offsetY,
-  );
   const flashOpacity = useSharedValue(0);
 
   const lightHex = adjustColor(colorHex, 45);
@@ -85,36 +76,13 @@ export const Gem: React.FC<GemProps> = ({
 
   useEffect(() => {
     if (settleInstant) {
-      scale.value = isSelected ? MOTION.SELECTED_SCALE : 1;
+      scale.value = 1;
       translateY.value = isSelected ? MOTION.SELECTED_TRANSLATE_Y : 0;
       rotate.value = 0;
-      shadowOpacity.value = isSelected
-        ? MOTION.SHADOW_SELECTED.opacity
-        : MOTION.SHADOW_DEFAULT.opacity;
-      shadowRadius.value = isSelected
-        ? MOTION.SHADOW_SELECTED.radius
-        : MOTION.SHADOW_DEFAULT.radius;
-      shadowOffsetY.value = isSelected
-        ? MOTION.SHADOW_SELECTED.offsetY
-        : MOTION.SHADOW_DEFAULT.offsetY;
       return;
     }
 
     if (isSelected) {
-      scale.value = withSpring(MOTION.SELECTED_SCALE, MOTION.SPRING_SELECTION);
-      shadowOpacity.value = withSpring(
-        MOTION.SHADOW_SELECTED.opacity,
-        MOTION.SPRING_SELECTION,
-      );
-      shadowRadius.value = withSpring(
-        MOTION.SHADOW_SELECTED.radius,
-        MOTION.SPRING_SELECTION,
-      );
-      shadowOffsetY.value = withSpring(
-        MOTION.SHADOW_SELECTED.offsetY,
-        MOTION.SPRING_SELECTION,
-      );
-
       translateY.value = withSpring(
         MOTION.SELECTED_TRANSLATE_Y,
         MOTION.SPRING_SELECTION,
@@ -125,18 +93,6 @@ export const Gem: React.FC<GemProps> = ({
       scale.value = withSpring(1, MOTION.SPRING_DESELECT);
       translateY.value = withSpring(0, MOTION.SPRING_DESELECT);
       rotate.value = withSpring(0, MOTION.SPRING_DESELECT);
-      shadowOpacity.value = withSpring(
-        MOTION.SHADOW_DEFAULT.opacity,
-        MOTION.SPRING_DESELECT,
-      );
-      shadowRadius.value = withSpring(
-        MOTION.SHADOW_DEFAULT.radius,
-        MOTION.SPRING_DESELECT,
-      );
-      shadowOffsetY.value = withSpring(
-        MOTION.SHADOW_DEFAULT.offsetY,
-        MOTION.SPRING_DESELECT,
-      );
     }
   }, [isSelected, settleInstant]);
 
@@ -151,7 +107,7 @@ export const Gem: React.FC<GemProps> = ({
       return;
     }
 
-    const restScale = isSelected ? MOTION.SELECTED_SCALE : 1;
+    const restScale = 1;
     const spring = MOTION.SPRING_PLACEMENT;
 
     const entryAnimation = () => {
@@ -195,19 +151,12 @@ export const Gem: React.FC<GemProps> = ({
 
   const containerStyle = useAnimatedStyle(() => ({
     transform: [
-      { scale: scale.value },
       { translateY: translateY.value },
+      { scale: scale.value },
       { rotate: `${rotate.value}deg` },
     ],
     opacity: opacity.value,
     zIndex: isSelected ? 99 : 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: shadowOffsetY.value },
-    shadowOpacity: shadowOpacity.value,
-    shadowRadius: shadowRadius.value,
-    elevation: isSelected
-      ? MOTION.SELECTED_ELEVATION
-      : MOTION.DEFAULT_ELEVATION,
   }));
 
   const flashStyle = useAnimatedStyle(() => ({

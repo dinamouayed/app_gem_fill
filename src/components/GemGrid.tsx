@@ -3,10 +3,7 @@ import { View, StyleSheet, useWindowDimensions } from "react-native";
 import { GemSlot } from "./GemSlot";
 import { GemColor } from "../types/level";
 import { CellPosition } from "../types/game";
-import { useGridCellAnimations } from "../hooks/useGridCellAnimations";
 import { cellKey } from "../constants/motion";
-import { PlacementFlightGem } from "./PlacementFlightGem";
-import type { ActivePlacementFlight } from "../hooks/usePlacementAnimator";
 
 interface GemGridProps {
   rows: number;
@@ -15,12 +12,6 @@ interface GemGridProps {
   currentGrid: (string | null)[][];
   paletteMap: Record<string, GemColor>;
   selectedPositions: CellPosition[];
-  isPlacementAnimating?: boolean;
-  activeFlights?: ActivePlacementFlight[];
-  waitingSourcePositions?: CellPosition[];
-  settlingDestinations?: CellPosition[];
-  onPlacementFlightLand?: (stepIndex: number) => void;
-  onPlacementFlightDismiss?: (stepIndex: number) => void;
   onCellRefRegister?: (row: number, col: number, node: View | null) => void;
   onCellSizeChange?: (cellSize: number) => void;
   onCellPress: (row: number, col: number) => void;
@@ -34,12 +25,6 @@ export const GemGrid: React.FC<GemGridProps> = ({
   currentGrid,
   paletteMap,
   selectedPositions,
-  isPlacementAnimating = false,
-  activeFlights = [],
-  waitingSourcePositions = [],
-  settlingDestinations = [],
-  onPlacementFlightLand,
-  onPlacementFlightDismiss,
   onCellRefRegister,
   onCellSizeChange,
   onCellPress,
@@ -47,12 +32,6 @@ export const GemGrid: React.FC<GemGridProps> = ({
 }) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const cellRefs = useRef<Map<string, View>>(new Map());
-
-  const diffAnimations = useGridCellAnimations(
-    currentGrid,
-    targetGrid,
-    !isPlacementAnimating,
-  );
 
   const cellSize = useMemo(() => {
     const horizontalMargin = 32;
@@ -89,10 +68,6 @@ export const GemGrid: React.FC<GemGridProps> = ({
     [onCellRefRegister],
   );
 
-  const boardFlights = activeFlights.filter(
-    ({ step }) => step.reserveSourceIndex === undefined,
-  );
-
   return (
     <View style={styles.gridWrapper}>
       <View style={styles.gridContainer}>
@@ -112,23 +87,9 @@ export const GemGrid: React.FC<GemGridProps> = ({
                 ? (paletteMap[currentColorId] ?? null)
                 : null;
 
-              const isSelected =
-                selectedPositions.some(
-                  (position) =>
-                    position.row === rowIndex && position.col === columnIndex,
-                ) ||
-                waitingSourcePositions.some(
-                  (position) =>
-                    position.row === rowIndex && position.col === columnIndex,
-                );
-
-              const isSettling = settlingDestinations.some(
+              const isSelected = selectedPositions.some(
                 (position) =>
                   position.row === rowIndex && position.col === columnIndex,
-              );
-
-              const animation = diffAnimations.get(
-                cellKey(rowIndex, columnIndex),
               );
 
               return (
@@ -139,11 +100,11 @@ export const GemGrid: React.FC<GemGridProps> = ({
                   currentColor={currentColor}
                   isSelected={isSelected}
                   isDimmed={false}
-                  placementPulseToken={animation?.pulseToken ?? 0}
-                  cascadeDelayMs={animation?.cascadeDelayMs ?? 0}
-                  entryRotationDeg={animation?.entryRotationDeg ?? 0}
-                  isCorrectPlacement={animation?.isCorrectPlacement ?? false}
-                  isSettling={isSettling}
+                  placementPulseToken={0}
+                  cascadeDelayMs={0}
+                  entryRotationDeg={0}
+                  isCorrectPlacement={false}
+                  isSettling={false}
                   cellRef={(node) =>
                     registerCellRef(rowIndex, columnIndex, node)
                   }
@@ -155,20 +116,6 @@ export const GemGrid: React.FC<GemGridProps> = ({
           </View>
         ))}
       </View>
-
-      {onPlacementFlightLand &&
-        onPlacementFlightDismiss &&
-        boardFlights.map(({ stepIndex, step }) => (
-          <PlacementFlightGem
-            key={`flight-${stepIndex}`}
-            step={step}
-            stepIndex={stepIndex}
-            colorHex={paletteMap[step.colorId]?.hex ?? "#64748B"}
-            cellSize={cellSize}
-            onLand={onPlacementFlightLand}
-            onDismiss={onPlacementFlightDismiss}
-          />
-        ))}
     </View>
   );
 };
@@ -182,28 +129,13 @@ const styles = StyleSheet.create({
   gridContainer: {
     padding: 8,
 
-    backgroundColor: "#0F172A",
-
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: "#334155",
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-    elevation: 8,
-
-    overflow: "visible",
+    borderRadius: 8,
+    backgroundColor: "rgba(15, 23, 42, 0.4)",
+    borderWidth: 1,
+    borderColor: "rgba(148, 163, 184, 0.15)",
   },
 
   row: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    overflow: "visible",
   },
 });

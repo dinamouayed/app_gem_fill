@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,8 +12,6 @@ import { GemGrid } from '../../src/components/GemGrid';
 import { ZoomableBoard } from '../../src/components/ZoomableBoard';
 import { ReserveZone } from '../../src/components/ReserveZone';
 import { VictoryModal } from '../../src/components/VictoryModal';
-import { ReservePlacementFlightGem } from '../../src/components/ReservePlacementFlightGem';
-import { cellKey } from '../../src/constants/motion';
 
 export default function GameScreen() {
   const router = useRouter();
@@ -25,13 +23,7 @@ export default function GameScreen() {
 
   const [victoryModalVisible, setVictoryModalVisible] = useState(false);
   const [victoryStats, setVictoryStats] = useState({ moves: 0, time: 0, stars: 3 });
-  const [gridCellSize, setGridCellSize] = useState(42);
 
-  const overlayRef = useRef<View>(null);
-  const reserveSlotRefs = useRef<Map<number, View>>(new Map());
-  const cellRefs = useRef<Map<string, View>>(new Map());
-
-  // Map palette IDs to GemColor objects
   const paletteMap = useMemo(() => {
     const map: Record<string, GemColor> = {};
     level.palette.forEach((c) => {
@@ -46,7 +38,7 @@ export default function GameScreen() {
       await recordVictory(level.id, moves, time, stars);
       setTimeout(() => {
         setVictoryModalVisible(true);
-      }, 400);
+      }, 250);
     },
     [level.id, recordVictory]
   );
@@ -62,55 +54,13 @@ export default function GameScreen() {
     percentage,
     stars,
     isInitialized,
-    isPlacementAnimating,
-    activeFlights,
-    waitingSourcePositions,
-    waitingReserveIndices,
-    settlingDestinations,
-    flyingReserveIndices,
-    handlePlacementFlightLand,
-    handlePlacementFlightDismiss,
-    handlePlacementFlightTakeoff,
     handleCellTap,
     handleReserveTap,
     moveGemToReserve,
     restartLevel,
   } = useGame(level, handleVictory);
 
-  const registerReserveSlotRef = useCallback((index: number, node: View | null) => {
-    if (node) {
-      reserveSlotRefs.current.set(index, node);
-    } else {
-      reserveSlotRefs.current.delete(index);
-    }
-  }, []);
-
-  const registerCellRef = useCallback((row: number, col: number, node: View | null) => {
-    const key = cellKey(row, col);
-
-    if (node) {
-      cellRefs.current.set(key, node);
-    } else {
-      cellRefs.current.delete(key);
-    }
-  }, []);
-
-  const getReserveSlotRef = useCallback(
-    (index: number) => reserveSlotRefs.current.get(index) ?? null,
-    [],
-  );
-
-  const getCellRef = useCallback((row: number, col: number) => {
-    return cellRefs.current.get(cellKey(row, col)) ?? null;
-  }, []);
-
-  const reserveFlights = activeFlights.filter(
-    ({ step }) => step.reserveSourceIndex !== undefined,
-  );
-
-  // Hint logic: finds a misplaced gem and highlights or moves it
   const handleHint = () => {
-    // Find first misplaced gem on grid
     let misplacedRow = -1;
     let misplacedCol = -1;
     for (let r = 0; r < level.rows; r++) {
@@ -149,7 +99,6 @@ export default function GameScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Top Header Status Bar */}
       <HeaderBar
         levelId={level.id}
         levelName={level.name}
@@ -159,7 +108,6 @@ export default function GameScreen() {
         onRestart={restartLevel}
       />
 
-      {/* Progress Subheader */}
       <View style={styles.subHeader}>
         <View style={styles.percentageBarContainer}>
           <View style={[styles.percentageBarFill, { width: `${percentage}%` }]} />
@@ -173,8 +121,7 @@ export default function GameScreen() {
         </View>
       </View>
 
-      <View ref={overlayRef} style={styles.playfield} collapsable={false}>
-        {/* Central Puzzle Grid */}
+      <View style={styles.playfield}>
         <View style={styles.gridArea}>
           <ZoomableBoard>
             <GemGrid
@@ -184,54 +131,20 @@ export default function GameScreen() {
               currentGrid={grid}
               paletteMap={paletteMap}
               selectedPositions={selectedPositions}
-              isPlacementAnimating={isPlacementAnimating}
-              activeFlights={activeFlights}
-              waitingSourcePositions={waitingSourcePositions}
-              settlingDestinations={settlingDestinations}
-              onPlacementFlightLand={handlePlacementFlightLand}
-              onPlacementFlightDismiss={handlePlacementFlightDismiss}
-              onCellRefRegister={registerCellRef}
-              onCellSizeChange={setGridCellSize}
               onCellPress={(r, c) => handleCellTap(r, c)}
               onCellLongPress={(r, c) => moveGemToReserve(r, c)}
             />
           </ZoomableBoard>
         </View>
 
-        {/* Bottom Temporary Reserve Holding Zone */}
         <ReserveZone
           reserve={reserve}
           paletteMap={paletteMap}
           selectedReserveColorId={selectedReserveColorId}
-          waitingReserveIndices={waitingReserveIndices}
-          flyingReserveIndices={flyingReserveIndices}
-          onSlotRefRegister={registerReserveSlotRef}
           onSlotPress={(idx) => handleReserveTap(idx)}
         />
-
-        {isPlacementAnimating &&
-          reserveFlights.map(({ stepIndex, step }) => (
-            <ReservePlacementFlightGem
-              key={`reserve-flight-${stepIndex}`}
-              step={step}
-              stepIndex={stepIndex}
-              colorHex={paletteMap[step.colorId]?.hex ?? '#64748B'}
-              gemSize={Math.max(18, gridCellSize - 4)}
-              overlayRef={overlayRef}
-              getReserveSlotRef={getReserveSlotRef}
-              getCellRef={getCellRef}
-              onTakeoff={() => {
-                if (step.reserveSourceIndex !== undefined) {
-                  handlePlacementFlightTakeoff(step.reserveSourceIndex);
-                }
-              }}
-              onLand={handlePlacementFlightLand}
-              onDismiss={handlePlacementFlightDismiss}
-            />
-          ))}
       </View>
 
-      {/* Victory Modal Overlay */}
       <VictoryModal
         visible={victoryModalVisible}
         level={level}

@@ -202,6 +202,64 @@ export function findBoardDestinationSlots(
   return candidateSlots;
 }
 
+const cellDistance = (a: CellPosition, b: CellPosition): number => {
+  const rowDelta = a.row - b.row;
+  const colDelta = a.col - b.col;
+
+  return Math.hypot(rowDelta, colDelta);
+};
+
+/** Pair sources and destinations by nearest-neighbor for natural flight paths. */
+export function pairPositionsByProximity(
+  sources: CellPosition[],
+  destinations: CellPosition[],
+): {
+  sourcePositions: CellPosition[];
+  placedPositions: CellPosition[];
+} {
+  const remainingSources = [...sources];
+  const remainingDestinations = [...destinations];
+  const sourcePositions: CellPosition[] = [];
+  const placedPositions: CellPosition[] = [];
+  const pairCount = Math.min(sources.length, destinations.length);
+
+  for (let pairIndex = 0; pairIndex < pairCount; pairIndex++) {
+    let bestDistance = Number.POSITIVE_INFINITY;
+    let bestSourceIndex = 0;
+    let bestDestinationIndex = 0;
+
+    for (
+      let sourceIndex = 0;
+      sourceIndex < remainingSources.length;
+      sourceIndex++
+    ) {
+      for (
+        let destinationIndex = 0;
+        destinationIndex < remainingDestinations.length;
+        destinationIndex++
+      ) {
+        const distance = cellDistance(
+          remainingSources[sourceIndex],
+          remainingDestinations[destinationIndex],
+        );
+
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestSourceIndex = sourceIndex;
+          bestDestinationIndex = destinationIndex;
+        }
+      }
+    }
+
+    sourcePositions.push(remainingSources[bestSourceIndex]);
+    placedPositions.push(remainingDestinations[bestDestinationIndex]);
+    remainingSources.splice(bestSourceIndex, 1);
+    remainingDestinations.splice(bestDestinationIndex, 1);
+  }
+
+  return { sourcePositions, placedPositions };
+}
+
 /**
  * Move a selected group of gems to target slots on the board starting from destination.
  */
@@ -272,8 +330,10 @@ export function moveGroupToBoard(
   const remainingSelectedPositions: CellPosition[] = [];
 
   const movesCount = Math.min(selectedPositions.length, candidateSlots.length);
-  const placedPositions = candidateSlots.slice(0, movesCount);
-  const sourcePositions = selectedPositions.slice(0, movesCount);
+  const { sourcePositions, placedPositions } = pairPositionsByProximity(
+    selectedPositions.slice(0, movesCount),
+    candidateSlots.slice(0, movesCount),
+  );
 
   // Place gems into candidate slots
   for (let i = 0; i < movesCount; i++) {

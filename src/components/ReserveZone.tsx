@@ -68,7 +68,7 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
           size={slotSize - 4}
           isSelected={isSelected}
           isDimmed={isDimmed}
-          onPress={() => onSlotPress(index)}
+          interactive={false}
         />
       ) : !gemColor ? (
         <Text style={styles.emptyIndex}>{index + 1}</Text>
