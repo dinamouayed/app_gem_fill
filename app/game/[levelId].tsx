@@ -141,6 +141,8 @@ export default function GameScreen() {
           reserve={reserve}
           paletteMap={paletteMap}
           selectedReserveColorId={selectedReserveColorId}
+          isBoardGroupSelected={selectedPositions.length > 0}
+          onZonePress={() => handleReserveTap(0)}
           onSlotPress={(idx) => handleReserveTap(idx)}
         />
       </View>
