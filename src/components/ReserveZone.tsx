@@ -8,9 +8,6 @@ interface ReserveZoneProps {
   reserve: (string | null)[];
   paletteMap: Record<string, GemColor>;
   selectedReserveColorId: string | null;
-  waitingReserveIndices?: number[];
-  flyingReserveIndices?: number[];
-  onSlotRefRegister?: (index: number, node: View | null) => void;
   onSlotPress: (index: number) => void;
 }
 
@@ -22,9 +19,6 @@ interface ReserveSlotProps {
   slotSize: number;
   paletteMap: Record<string, GemColor>;
   selectedReserveColorId: string | null;
-  isWaiting?: boolean;
-  isFlying?: boolean;
-  onSlotRefRegister?: (index: number, node: View | null) => void;
   onSlotPress: (index: number) => void;
 }
 
@@ -34,21 +28,16 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
   slotSize,
   paletteMap,
   selectedReserveColorId,
-  isWaiting = false,
-  isFlying = false,
-  onSlotRefRegister,
   onSlotPress,
 }) => {
   const gemColor = gemId ? (paletteMap[gemId] ?? null) : null;
   const isSelected =
-    gemId !== null &&
-    (selectedReserveColorId === gemId || isWaiting);
+    gemId !== null && selectedReserveColorId === gemId;
   const isDimmed =
     selectedReserveColorId !== null && gemId !== null && !isSelected;
 
   return (
     <Pressable
-      ref={(node) => onSlotRefRegister?.(index, node)}
       onPress={() => onSlotPress(index)}
       style={[
         styles.slotBox,
@@ -62,7 +51,7 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
         },
       ]}
     >
-      {gemColor && !isFlying ? (
+      {gemColor ? (
         <Gem
           colorHex={gemColor.hex}
           size={Math.max(12, slotSize - 2)}
@@ -70,9 +59,9 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
           isDimmed={isDimmed}
           interactive={false}
         />
-      ) : !gemColor ? (
+      ) : (
         <Text style={styles.emptyIndex}>{index + 1}</Text>
-      ) : null}
+      )}
     </Pressable>
   );
 };
@@ -81,9 +70,6 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
   reserve,
   paletteMap,
   selectedReserveColorId,
-  waitingReserveIndices = [],
-  flyingReserveIndices = [],
-  onSlotRefRegister,
   onSlotPress,
 }) => {
   const occupiedCount = reserve.filter((item) => item !== null).length;
@@ -100,7 +86,6 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
       <View style={styles.header}>
         <View style={styles.titleRow}>
           <Inbox size={18} color="#94A3B8" style={styles.titleIcon} />
-
           <Text style={styles.titleText}>Zone de Réserve</Text>
         </View>
 
@@ -123,9 +108,6 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
                   slotSize={slotSize}
                   paletteMap={paletteMap}
                   selectedReserveColorId={selectedReserveColorId}
-                  isWaiting={waitingReserveIndices.includes(slotIndex)}
-                  isFlying={flyingReserveIndices.includes(slotIndex)}
-                  onSlotRefRegister={onSlotRefRegister}
                   onSlotPress={onSlotPress}
                 />
               );
@@ -141,24 +123,16 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#1E293B",
     borderRadius: 20,
-
     paddingHorizontal: 16,
     paddingVertical: 12,
-
     marginHorizontal: 16,
     marginBottom: 10,
-
     borderWidth: 1,
     borderColor: "#334155",
-
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
-
     elevation: 6,
   },
 

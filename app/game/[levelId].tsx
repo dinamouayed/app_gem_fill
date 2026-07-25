@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,9 +12,6 @@ import { GemGrid } from '../../src/components/GemGrid';
 import { ZoomableBoard } from '../../src/components/ZoomableBoard';
 import { ReserveZone } from '../../src/components/ReserveZone';
 import { VictoryModal } from '../../src/components/VictoryModal';
-import { ReservePlacementFlightGem } from '../../src/components/ReservePlacementFlightGem';
-import { usePlacementAnimator } from '../../src/hooks/usePlacementAnimator';
-import { cellKey } from '../../src/constants/motion';
 
 export default function GameScreen() {
   const router = useRouter();
@@ -26,11 +23,6 @@ export default function GameScreen() {
 
   const [victoryModalVisible, setVictoryModalVisible] = useState(false);
   const [victoryStats, setVictoryStats] = useState({ moves: 0, time: 0, stars: 3 });
-
-  const placementAnimator = usePlacementAnimator();
-  const playfieldOverlayRef = useRef<View>(null);
-  const cellRefMap = useRef<Map<string, View>>(new Map());
-  const reserveSlotRefMap = useRef<Map<number, View>>(new Map());
 
   const paletteMap = useMemo(() => {
     const map: Record<string, GemColor> = {};
@@ -48,14 +40,7 @@ export default function GameScreen() {
         setVictoryModalVisible(true);
       }, 250);
     },
-    [level.id, recordVictory]
-  );
-
-  const startPlacementAnimation = useCallback(
-    (request: Parameters<typeof placementAnimator.startSequence>[0]) => {
-      placementAnimator.startSequence(request);
-    },
-    [placementAnimator.startSequence],
+    [level.id, recordVictory],
   );
 
   const {
@@ -73,63 +58,9 @@ export default function GameScreen() {
     handleReserveTap,
     moveGemToReserve,
     restartLevel,
-  } = useGame(level, handleVictory, {
-    onPlacementAnimation: startPlacementAnimation,
-  });
-
-  const displayGrid = placementAnimator.displayGrid ?? grid;
-  const displayReserve = placementAnimator.displayReserve ?? reserve;
-  const isPlacementAnimating = placementAnimator.isAnimating;
-
-  const flyingReserveIndices = useMemo(
-    () =>
-      placementAnimator.activeFlights
-        .map((flight) => flight.step.reserveSourceIndex)
-        .filter((index): index is number => index !== undefined),
-    [placementAnimator.activeFlights],
-  );
-
-  const reserveFlights = useMemo(
-    () =>
-      placementAnimator.activeFlights.filter(
-        (flight) => flight.step.reserveSourceIndex !== undefined,
-      ),
-    [placementAnimator.activeFlights],
-  );
-
-  const registerCellRef = useCallback((row: number, col: number, node: View | null) => {
-    const key = cellKey(row, col);
-
-    if (node) {
-      cellRefMap.current.set(key, node);
-    } else {
-      cellRefMap.current.delete(key);
-    }
-  }, []);
-
-  const registerReserveSlotRef = useCallback((index: number, node: View | null) => {
-    if (node) {
-      reserveSlotRefMap.current.set(index, node);
-    } else {
-      reserveSlotRefMap.current.delete(index);
-    }
-  }, []);
-
-  const getCellRef = useCallback(
-    (row: number, col: number) => cellRefMap.current.get(cellKey(row, col)) ?? null,
-    [],
-  );
-
-  const getReserveSlotRef = useCallback(
-    (index: number) => reserveSlotRefMap.current.get(index) ?? null,
-    [],
-  );
+  } = useGame(level, handleVictory);
 
   const handleHint = () => {
-    if (isPlacementAnimating) {
-      return;
-    }
-
     let misplacedRow = -1;
     let misplacedCol = -1;
     for (let r = 0; r < level.rows; r++) {
@@ -148,7 +79,7 @@ export default function GameScreen() {
       const targetColorObj = paletteMap[correctColorId];
       Alert.alert(
         'Indice Gemme',
-        `La case en position (${misplacedRow + 1}, ${misplacedCol + 1}) nécessite la gemme "${targetColorObj?.name || correctColorId}".`
+        `La case en position (${misplacedRow + 1}, ${misplacedCol + 1}) nécessite la gemme "${targetColorObj?.name || correctColorId}".`,
       );
     } else {
       Alert.alert('Indice', 'Toutes les gemmes actuellement placées sont correctes !');
@@ -165,7 +96,6 @@ export default function GameScreen() {
   }
 
   const nextLevel = getLevelById(level.id + 1);
-  const reserveGemSize = 38;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -191,63 +121,28 @@ export default function GameScreen() {
         </View>
       </View>
 
-      <View
-        ref={playfieldOverlayRef}
-        style={styles.playfield}
-        pointerEvents="box-none"
-      >
-        <View style={styles.gridArea} pointerEvents={isPlacementAnimating ? 'none' : 'auto'}>
+      <View style={styles.playfield}>
+        <View style={styles.gridArea}>
           <ZoomableBoard>
             <GemGrid
               rows={level.rows}
               columns={level.columns}
               targetGrid={level.targetGrid}
-              currentGrid={displayGrid}
+              currentGrid={grid}
               paletteMap={paletteMap}
               selectedPositions={selectedPositions}
-              interactionsDisabled={isPlacementAnimating}
-              settlingDestinations={placementAnimator.settlingDestinations}
-              activeFlights={placementAnimator.activeFlights}
-              onFlightLand={placementAnimator.handleFlightLand}
-              onFlightDismiss={placementAnimator.handleFlightDismiss}
-              onCellRefRegister={registerCellRef}
               onCellPress={(r, c) => handleCellTap(r, c)}
               onCellLongPress={(r, c) => moveGemToReserve(r, c)}
             />
           </ZoomableBoard>
         </View>
 
-        <View pointerEvents={isPlacementAnimating ? 'none' : 'auto'}>
-          <ReserveZone
-            reserve={displayReserve}
-            paletteMap={paletteMap}
-            selectedReserveColorId={selectedReserveColorId}
-            waitingReserveIndices={placementAnimator.waitingReserveIndices}
-            flyingReserveIndices={flyingReserveIndices}
-            onSlotRefRegister={registerReserveSlotRef}
-            onSlotPress={(idx) => handleReserveTap(idx)}
-          />
-        </View>
-
-        {reserveFlights.map(({ step, stepIndex }) => (
-          <ReservePlacementFlightGem
-            key={`reserve-flight-${stepIndex}-${step.dest.row}-${step.dest.col}`}
-            step={step}
-            stepIndex={stepIndex}
-            colorHex={paletteMap[step.colorId]?.hex ?? '#64748B'}
-            gemSize={reserveGemSize}
-            overlayRef={playfieldOverlayRef}
-            getReserveSlotRef={getReserveSlotRef}
-            getCellRef={getCellRef}
-            onTakeoff={() => {
-              if (step.reserveSourceIndex !== undefined) {
-                placementAnimator.handleFlightTakeoff(step.reserveSourceIndex);
-              }
-            }}
-            onLand={placementAnimator.handleFlightLand}
-            onDismiss={placementAnimator.handleFlightDismiss}
-          />
-        ))}
+        <ReserveZone
+          reserve={reserve}
+          paletteMap={paletteMap}
+          selectedReserveColorId={selectedReserveColorId}
+          onSlotPress={(idx) => handleReserveTap(idx)}
+        />
       </View>
 
       <VictoryModal
@@ -334,8 +229,6 @@ const styles = StyleSheet.create({
   },
   playfield: {
     flex: 1,
-    position: 'relative',
-    overflow: 'visible',
   },
   gridArea: {
     flex: 1,
