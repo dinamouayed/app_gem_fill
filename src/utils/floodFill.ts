@@ -277,3 +277,64 @@ export function moveGroupToBoard(
     remainingSelectedPositions,
   };
 }
+
+/**
+ * Place gems from the reserve onto connected valid board slots
+ * starting from a destination position (8-directional BFS).
+ */
+export function moveReserveGroupToBoard(
+  grid: (string | null)[][],
+  targetGrid: string[][],
+  reserve: (string | null)[],
+  destination: CellPosition,
+  colorId: string,
+): {
+  nextGrid: (string | null)[][];
+  nextReserve: (string | null)[];
+  placedCount: number;
+} {
+  const candidateSlots = findBoardDestinationSlots(
+    grid,
+    targetGrid,
+    destination,
+    colorId,
+    new Set<string>(),
+  );
+
+  if (candidateSlots.length === 0) {
+    return { nextGrid: grid, nextReserve: reserve, placedCount: 0 };
+  }
+
+  const availableInReserve = reserve.filter(
+    (gemId) => gemId === colorId,
+  ).length;
+
+  const placeCount = Math.min(candidateSlots.length, availableInReserve);
+
+  if (placeCount === 0) {
+    return { nextGrid: grid, nextReserve: reserve, placedCount: 0 };
+  }
+
+  const nextGrid = grid.map((row) => [...row]);
+  const nextReserve = [...reserve];
+
+  for (let index = 0; index < placeCount; index++) {
+    const slot = candidateSlots[index];
+    nextGrid[slot.row][slot.col] = colorId;
+  }
+
+  let removed = 0;
+
+  for (
+    let index = 0;
+    index < nextReserve.length && removed < placeCount;
+    index++
+  ) {
+    if (nextReserve[index] === colorId) {
+      nextReserve[index] = null;
+      removed++;
+    }
+  }
+
+  return { nextGrid, nextReserve, placedCount: placeCount };
+}

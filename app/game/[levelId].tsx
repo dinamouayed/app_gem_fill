@@ -47,7 +47,7 @@ export default function GameScreen() {
     grid,
     reserve,
     selectedPositions,
-    selectedReserveIndex,
+    selectedReserveColorId,
     moves,
     elapsedTime,
     isVictory,
@@ -59,8 +59,6 @@ export default function GameScreen() {
     moveGemToReserve,
     restartLevel,
   } = useGame(level, handleVictory);
-
-  const hasSelection = selectedPositions.length > 0 || selectedReserveIndex !== null;
 
   // Hint logic: finds a misplaced gem and highlights or moves it
   const handleHint = () => {
@@ -136,7 +134,6 @@ export default function GameScreen() {
           currentGrid={grid}
           paletteMap={paletteMap}
           selectedPositions={selectedPositions}
-          hasSelection={hasSelection}
           onCellPress={(r, c) => handleCellTap(r, c)}
           onCellLongPress={(r, c) => moveGemToReserve(r, c)}
         />
@@ -146,8 +143,7 @@ export default function GameScreen() {
       <ReserveZone
         reserve={reserve}
         paletteMap={paletteMap}
-        selectedReserveIndex={selectedReserveIndex}
-        hasSelection={hasSelection}
+        selectedReserveColorId={selectedReserveColorId}
         onSlotPress={(idx) => handleReserveTap(idx)}
       />
 

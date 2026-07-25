@@ -13,48 +13,87 @@ import {
   getConnectedGemGroup,
   moveGroupToReserve,
   moveGroupToBoard,
+  moveReserveGroupToBoard,
 } from "../utils/floodFill";
 
-export const RESERVE_CAPACITY = 4;
+export const RESERVE_CAPACITY = 12;
+
+const createEmptyReserve = (): (string | null)[] =>
+  Array(RESERVE_CAPACITY).fill(null);
+
+/*
+ * Range les gemmes selon l'ordre des couleurs
+ * défini dans la palette du niveau.
+ *
+ * Les emplacements vides sont placés à la fin.
+ */
+const sortReserveByColor = (
+  reserve: (string | null)[],
+  paletteOrder: string[],
+): (string | null)[] => {
+  const orderMap = new Map(
+    paletteOrder.map((colorId, index) => [colorId, index]),
+  );
+
+  const gems = reserve.filter((gemId): gemId is string => gemId !== null);
+
+  gems.sort((firstGemId, secondGemId) => {
+    const firstOrder = orderMap.get(firstGemId) ?? Number.MAX_SAFE_INTEGER;
+
+    const secondOrder = orderMap.get(secondGemId) ?? Number.MAX_SAFE_INTEGER;
+
+    return firstOrder - secondOrder;
+  });
+
+  return [...gems, ...Array(RESERVE_CAPACITY - gems.length).fill(null)];
+};
 
 export function useGame(
   level: Level,
   onVictoryCallback?: (moves: number, time: number, stars: number) => void,
 ) {
   const [grid, setGrid] = useState<(string | null)[][]>([]);
-  const [reserve, setReserve] = useState<(string | null)[]>(
-    Array(RESERVE_CAPACITY).fill(null),
-  );
+
+  const [reserve, setReserve] =
+    useState<(string | null)[]>(createEmptyReserve());
+
   const [selectedPositions, setSelectedPositions] = useState<CellPosition[]>(
     [],
   );
-  const [selectedReserveIndex, setSelectedReserveIndex] = useState<
-    number | null
+
+  /*
+   * Une couleur est sélectionnée au lieu d'un seul index.
+   * Toutes les gemmes identiques de la réserve sont donc
+   * sélectionnées en même temps.
+   */
+  const [selectedReserveColorId, setSelectedReserveColorId] = useState<
+    string | null
   >(null);
-  const [moves, setMoves] = useState<number>(0);
-  const [elapsedTime, setElapsedTime] = useState<number>(0);
-  const [isVictory, setIsVictory] = useState<boolean>(false);
-  const [percentage, setPercentage] = useState<number>(0);
-  const [stars, setStars] = useState<number>(0);
-  const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
-  const timerRef = useRef<any>(null);
+  const [moves, setMoves] = useState(0);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [isVictory, setIsVictory] = useState(false);
+  const [percentage, setPercentage] = useState(0);
+  const [stars, setStars] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Helper to trigger haptics safely
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const paletteOrder = level.palette.map((color) => color.id);
+
   const triggerHaptic = useCallback(() => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {
-      // ignore
+      // Ignore les erreurs haptiques.
     }
   }, []);
 
-  // Helper to trigger success haptics
   const triggerSuccessHaptic = useCallback(() => {
     try {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
-      // ignore
+      // Ignore les erreurs haptiques.
     }
   }, []);
 
@@ -62,15 +101,14 @@ export function useGame(
     try {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } catch {
-      // ignore
+      // Ignore les erreurs haptiques.
     }
   }, []);
 
-  // Initialize or resume game
   const initGame = useCallback(async () => {
     setIsVictory(false);
     setSelectedPositions([]);
-    setSelectedReserveIndex(null);
+    setSelectedReserveColorId(null);
 
     const userProgress = await getUserProgress();
     const saved = userProgress.activeSavedGame;
@@ -81,52 +119,68 @@ export function useGame(
       saved.currentGrid.length === level.rows
     ) {
       setGrid(saved.currentGrid);
-      setReserve(
-        saved.reserveGems.length === RESERVE_CAPACITY
-          ? saved.reserveGems
-          : Array(RESERVE_CAPACITY).fill(null),
-      );
+
+      /*
+       * Permet aussi de récupérer une ancienne sauvegarde
+       * qui utilisait seulement 4 emplacements.
+       */
+      const restoredReserve = [
+        ...saved.reserveGems.filter((gemId): gemId is string => gemId !== null),
+        ...createEmptyReserve(),
+      ].slice(0, RESERVE_CAPACITY);
+
+      setReserve(sortReserveByColor(restoredReserve, paletteOrder));
+
       setMoves(saved.moves);
       setElapsedTime(saved.elapsedTimeSeconds);
 
       const check = checkGridState(saved.currentGrid, level.targetGrid);
+
       setPercentage(check.percentage);
-      if (check.isComplete) setIsVictory(true);
+
+      if (check.isComplete) {
+        setIsVictory(true);
+      }
     } else {
       const shuffled = shuffleTargetGrid(level.targetGrid);
-      const emptyReserve = Array(RESERVE_CAPACITY).fill(null);
+
       setGrid(shuffled);
-      setReserve(emptyReserve);
+      setReserve(createEmptyReserve());
       setMoves(0);
       setElapsedTime(0);
 
       const check = checkGridState(shuffled, level.targetGrid);
+
       setPercentage(check.percentage);
     }
+
     setIsInitialized(true);
-  }, [level]);
+  }, [level, paletteOrder.join("|")]);
 
   useEffect(() => {
     initGame();
   }, [initGame]);
 
-  // Timer loop
   useEffect(() => {
     if (!isInitialized || isVictory) {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+
       return;
     }
 
     timerRef.current = setInterval(() => {
-      setElapsedTime((prev) => prev + 1);
+      setElapsedTime((previousTime) => previousTime + 1);
     }, 1000);
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
     };
   }, [isInitialized, isVictory]);
 
-  // Check victory after state update
   const verifyStateAndSave = useCallback(
     (
       newGrid: (string | null)[][],
@@ -134,20 +188,22 @@ export function useGame(
       newMoves: number,
     ) => {
       const check = checkGridState(newGrid, level.targetGrid);
+
       setPercentage(check.percentage);
 
       if (check.isComplete) {
         setIsVictory(true);
         triggerSuccessHaptic();
+
         const earnedStars = calculateStars(
           newMoves,
           level.rows * level.columns,
         );
+
         setStars(earnedStars);
         clearActiveGameState();
-        if (onVictoryCallback) {
-          onVictoryCallback(newMoves, elapsedTime, earnedStars);
-        }
+
+        onVictoryCallback?.(newMoves, elapsedTime, earnedStars);
       } else {
         saveActiveGameState({
           levelId: level.id,
@@ -162,63 +218,92 @@ export function useGame(
     [level, elapsedTime, onVictoryCallback, triggerSuccessHaptic],
   );
 
-  // Tap handler for grid cell
   const handleCellTap = useCallback(
     (row: number, col: number) => {
-      if (isVictory) return;
+      if (isVictory) {
+        return;
+      }
 
       const cellValue = grid[row]?.[col];
 
-      // Case 1: A reserve gem is currently selected
-      if (selectedReserveIndex !== null) {
-        const reserveGem = reserve[selectedReserveIndex];
-        if (!reserveGem) {
-          setSelectedReserveIndex(null);
-          return;
-        }
+      /*
+       * Cas 1 :
+       * une couleur de la réserve est sélectionnée.
+       */
+      if (selectedReserveColorId !== null) {
+        const isValidDestination =
+          cellValue === null &&
+          level.targetGrid[row]?.[col] === selectedReserveColorId;
 
-        const isValidReserveDestination =
-          cellValue === null && level.targetGrid[row]?.[col] === reserveGem;
-
-        if (!isValidReserveDestination) {
-          setSelectedReserveIndex(null);
+        if (!isValidDestination) {
+          setSelectedReserveColorId(null);
           setSelectedPositions([]);
           return;
         }
 
-        const nextGrid = grid.map((r) => [...r]);
-        const nextReserve = [...reserve];
+        const boardMove = moveReserveGroupToBoard(
+          grid,
+          level.targetGrid,
+          reserve,
+          { row, col },
+          selectedReserveColorId,
+        );
 
-        // Move reserve gem to the empty grid cell
-        nextGrid[row][col] = reserveGem;
-        nextReserve[selectedReserveIndex] = null;
+        if (boardMove.placedCount === 0) {
+          setSelectedReserveColorId(null);
+          setSelectedPositions([]);
+          return;
+        }
+
+        const sortedReserve = sortReserveByColor(
+          boardMove.nextReserve,
+          paletteOrder,
+        );
 
         const nextMoves = moves + 1;
-        setGrid(nextGrid);
-        setReserve(nextReserve);
+
+        setGrid(boardMove.nextGrid);
+        setReserve(sortedReserve);
         setMoves(nextMoves);
-        setSelectedReserveIndex(null);
         setSelectedPositions([]);
+
+        /*
+         * La couleur reste sélectionnée tant qu'il reste
+         * au moins une gemme identique dans la réserve.
+         */
+        const stillHasSelectedColor = sortedReserve.some(
+          (gemId) => gemId === selectedReserveColorId,
+        );
+
+        setSelectedReserveColorId(
+          stillHasSelectedColor ? selectedReserveColorId : null,
+        );
+
         triggerHaptic();
-        verifyStateAndSave(nextGrid, nextReserve, nextMoves);
+
+        verifyStateAndSave(boardMove.nextGrid, sortedReserve, nextMoves);
+
         return;
       }
 
-      // Case 2: A grid group is currently selected
+      /*
+       * Cas 2 :
+       * un groupe du plateau est sélectionné.
+       */
       if (selectedPositions.length > 0) {
         const isAlreadySelected = selectedPositions.some(
           (position) => position.row === row && position.col === col,
         );
 
-        // Tapping the selected group again deselects it
         if (isAlreadySelected) {
           setSelectedPositions([]);
-          setSelectedReserveIndex(null);
+          setSelectedReserveColorId(null);
           triggerHaptic();
           return;
         }
 
         const selectedFirstPosition = selectedPositions[0];
+
         const selectedColor =
           grid[selectedFirstPosition.row]?.[selectedFirstPosition.col];
 
@@ -228,10 +313,9 @@ export function useGame(
           cellValue === null &&
           level.targetGrid[row]?.[col] === selectedColor;
 
-        // Any invalid destination simply clears the selection
         if (!isValidDestination) {
           setSelectedPositions([]);
-          setSelectedReserveIndex(null);
+          setSelectedReserveColorId(null);
           return;
         }
 
@@ -248,23 +332,26 @@ export function useGame(
           setGrid(boardMove.nextGrid);
           setMoves(nextMoves);
           setSelectedPositions(boardMove.remainingSelectedPositions);
-          setSelectedReserveIndex(null);
+          setSelectedReserveColorId(null);
 
           triggerHaptic();
+
           verifyStateAndSave(boardMove.nextGrid, reserve, nextMoves);
         } else {
           setSelectedPositions([]);
-          setSelectedReserveIndex(null);
+          setSelectedReserveColorId(null);
         }
 
         return;
       }
 
-      // Case 3: No group selected and user taps an occupied cell
+      /*
+       * Cas 3 :
+       * aucune sélection et clic sur une gemme du plateau.
+       */
       if (cellValue !== null) {
         const isGemCorrectlyPlaced = level.targetGrid[row]?.[col] === cellValue;
 
-        // Correctly placed gems are locked and produce no effect
         if (isGemCorrectlyPlaced) {
           return;
         }
@@ -280,69 +367,91 @@ export function useGame(
         }
 
         setSelectedPositions(group);
-        setSelectedReserveIndex(null);
+        setSelectedReserveColorId(null);
         triggerHaptic();
+
         return;
       }
 
-      // Case 4: Tap empty cell with no selection -> clear selection
       setSelectedPositions([]);
-      setSelectedReserveIndex(null);
+      setSelectedReserveColorId(null);
     },
     [
       grid,
       reserve,
       selectedPositions,
-      selectedReserveIndex,
+      selectedReserveColorId,
       isVictory,
       level.targetGrid,
       moves,
+      paletteOrder,
       triggerHaptic,
       verifyStateAndSave,
     ],
   );
 
-  // Tap handler for reserve slot
   const handleReserveTap = useCallback(
     (index: number) => {
-      if (isVictory) return;
+      if (isVictory) {
+        return;
+      }
 
-      // Case 1: A grid group is selected -> move selected group to reserve
+      /*
+       * Cas 1 :
+       * un groupe du plateau est sélectionné.
+       * Le groupe est envoyé dans la réserve.
+       */
       if (selectedPositions.length > 0) {
-        const resMove = moveGroupToReserve(grid, reserve, selectedPositions);
+        const reserveMove = moveGroupToReserve(
+          grid,
+          reserve,
+          selectedPositions,
+        );
 
-        if (resMove.movedGemIds.length > 0) {
+        if (reserveMove.movedGemIds.length > 0) {
+          const sortedReserve = sortReserveByColor(
+            reserveMove.nextReserve,
+            paletteOrder,
+          );
+
           const nextMoves = moves + 1;
-          setGrid(resMove.nextGrid);
-          setReserve(resMove.nextReserve);
-          setMoves(nextMoves);
-          setSelectedPositions(resMove.remainingSelectedPositions);
-          setSelectedReserveIndex(null);
 
-          if (resMove.remainingSelectedPositions.length > 0) {
-            triggerErrorHaptic(); // Partial move feedback if reserve filled up
+          setGrid(reserveMove.nextGrid);
+          setReserve(sortedReserve);
+          setMoves(nextMoves);
+          setSelectedPositions(reserveMove.remainingSelectedPositions);
+          setSelectedReserveColorId(null);
+
+          if (reserveMove.remainingSelectedPositions.length > 0) {
+            triggerErrorHaptic();
           } else {
             triggerHaptic();
           }
 
-          verifyStateAndSave(resMove.nextGrid, resMove.nextReserve, nextMoves);
+          verifyStateAndSave(reserveMove.nextGrid, sortedReserve, nextMoves);
         } else {
-          triggerErrorHaptic(); // Reserve is full
+          triggerErrorHaptic();
         }
+
         return;
       }
 
-      // Case 2: No grid group selected -> toggle reserve gem selection
-      if (reserve[index] !== null) {
-        if (selectedReserveIndex === index) {
-          setSelectedReserveIndex(null);
+      /*
+       * Cas 2 :
+       * sélection d'une couleur dans la réserve.
+       */
+      const selectedGemId = reserve[index];
+
+      if (selectedGemId !== null) {
+        if (selectedReserveColorId === selectedGemId) {
+          setSelectedReserveColorId(null);
         } else {
-          setSelectedReserveIndex(index);
+          setSelectedReserveColorId(selectedGemId);
           setSelectedPositions([]);
           triggerHaptic();
         }
       } else {
-        setSelectedReserveIndex(null);
+        setSelectedReserveColorId(null);
         setSelectedPositions([]);
       }
     },
@@ -350,19 +459,21 @@ export function useGame(
       grid,
       reserve,
       selectedPositions,
-      selectedReserveIndex,
+      selectedReserveColorId,
       isVictory,
       moves,
+      paletteOrder,
       triggerHaptic,
       triggerErrorHaptic,
       verifyStateAndSave,
     ],
   );
 
-  // Move gem / group to reserve via long press or direct trigger
   const moveGemToReserveHandler = useCallback(
     (row: number, col: number) => {
-      if (isVictory) return;
+      if (isVictory) {
+        return;
+      }
 
       const tappedGem = grid[row]?.[col];
 
@@ -372,23 +483,35 @@ export function useGame(
 
       const groupToMove =
         selectedPositions.length > 0 &&
-        selectedPositions.some((p) => p.row === row && p.col === col)
+        selectedPositions.some(
+          (position) => position.row === row && position.col === col,
+        )
           ? selectedPositions
           : getConnectedGemGroup(grid, { row, col }, level.targetGrid);
 
-      if (groupToMove.length === 0) return;
+      if (groupToMove.length === 0) {
+        return;
+      }
 
-      const resMove = moveGroupToReserve(grid, reserve, groupToMove);
+      const reserveMove = moveGroupToReserve(grid, reserve, groupToMove);
 
-      if (resMove.movedGemIds.length > 0) {
+      if (reserveMove.movedGemIds.length > 0) {
+        const sortedReserve = sortReserveByColor(
+          reserveMove.nextReserve,
+          paletteOrder,
+        );
+
         const nextMoves = moves + 1;
-        setGrid(resMove.nextGrid);
-        setReserve(resMove.nextReserve);
+
+        setGrid(reserveMove.nextGrid);
+        setReserve(sortedReserve);
         setMoves(nextMoves);
-        setSelectedPositions(resMove.remainingSelectedPositions);
-        setSelectedReserveIndex(null);
+        setSelectedPositions(reserveMove.remainingSelectedPositions);
+        setSelectedReserveColorId(null);
+
         triggerHaptic();
-        verifyStateAndSave(resMove.nextGrid, resMove.nextReserve, nextMoves);
+
+        verifyStateAndSave(reserveMove.nextGrid, sortedReserve, nextMoves);
       } else {
         triggerErrorHaptic();
       }
@@ -400,25 +523,30 @@ export function useGame(
       isVictory,
       moves,
       level.targetGrid,
+      paletteOrder,
       triggerHaptic,
       triggerErrorHaptic,
       verifyStateAndSave,
     ],
   );
 
-  // Restart level
   const restartLevel = useCallback(() => {
     clearActiveGameState();
+
     const shuffled = shuffleTargetGrid(level.targetGrid);
-    const emptyReserve = Array(RESERVE_CAPACITY).fill(null);
+
+    const emptyReserve = createEmptyReserve();
+
     setGrid(shuffled);
     setReserve(emptyReserve);
     setMoves(0);
     setElapsedTime(0);
     setIsVictory(false);
     setSelectedPositions([]);
-    setSelectedReserveIndex(null);
+    setSelectedReserveColorId(null);
+
     const check = checkGridState(shuffled, level.targetGrid);
+
     setPercentage(check.percentage);
     triggerHaptic();
   }, [level, triggerHaptic]);
@@ -427,7 +555,7 @@ export function useGame(
     grid,
     reserve,
     selectedPositions,
-    selectedReserveIndex,
+    selectedReserveColorId,
     moves,
     elapsedTime,
     isVictory,
@@ -439,6 +567,6 @@ export function useGame(
     moveGemToReserve: moveGemToReserveHandler,
     restartLevel,
     setSelectedPositions,
-    setSelectedReserveIndex,
+    setSelectedReserveColorId,
   };
 }

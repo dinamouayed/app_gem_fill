@@ -5,6 +5,7 @@ import {
   getConnectedGemGroup,
   moveGroupToReserve,
   moveGroupToBoard,
+  moveReserveGroupToBoard,
 } from "../floodFill";
 
 describe("Flood Fill & Connected Group Selection Tests", () => {
@@ -148,5 +149,26 @@ describe("Flood Fill & Connected Group Selection Tests", () => {
     assert.strictEqual(result.remainingSelectedPositions.length, 0);
     assert.strictEqual(result.nextGrid[0][2], "B");
     assert.strictEqual(result.nextGrid[1][2], "B");
+  });
+
+  it("Déplacement de plusieurs gemmes de la réserve vers le plateau", () => {
+    const grid = [[null, null, null]];
+    const targetGrid = [["B", "B", "B"]];
+    const reserve = ["B", "B", "B", "R", null, null, null, null, null, null];
+
+    const result = moveReserveGroupToBoard(
+      grid,
+      targetGrid,
+      reserve,
+      { row: 0, col: 0 },
+      "B",
+    );
+
+    assert.strictEqual(result.placedCount, 3);
+    assert.strictEqual(result.nextGrid.flat().filter((gemId) => gemId === "B").length, 3);
+    assert.strictEqual(
+      result.nextReserve.filter((gemId) => gemId === "B").length,
+      0,
+    );
   });
 });
