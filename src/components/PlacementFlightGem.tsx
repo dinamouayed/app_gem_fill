@@ -120,8 +120,8 @@ export const PlacementFlightGem: React.FC<PlacementFlightGemProps> = ({
     const lift = MOTION.SELECTED_TRANSLATE_Y * (1 - progress.value);
     const scale = interpolate(
       progress.value,
-      [0, MOTION.FLIGHT_LAND_AT_PROGRESS, 1],
-      [1.05, 1.05, 1],
+      [0, MOTION.FLIGHT_LAND_AT_PROGRESS, 0.94, 1],
+      [1.04, 1.04, 0.93, 1],
       Extrapolation.CLAMP,
     );
     const fadeOut = interpolate(

@@ -29,11 +29,11 @@ export const MOTION = {
     mass: 0.6,
   },
 
-  /** Vol d'une gem vers sa case — chevauchement autorisé */
-  FLIGHT_DURATION_MS: 110,
+  /** Vol d'une gem vers sa case (~120–180 ms) */
+  FLIGHT_DURATION_MS: 150,
 
   /** Progression (0–1) à laquelle la gem est posée sous le vol en fondu */
-  FLIGHT_LAND_AT_PROGRESS: 0.85,
+  FLIGHT_LAND_AT_PROGRESS: 0.88,
 
   SPRING_FLIGHT: {
     damping: 28,
@@ -48,15 +48,15 @@ export const MOTION = {
   PLACEMENT_SCALE_PEAK: 1.08,
   PLACEMENT_COMPRESS: 0.94,
 
-  CASCADE_DELAY_MS: 0,
+  CASCADE_DELAY_MS: 40,
   PLACEMENT_FLASH_MS: 120,
   DIM_DURATION_MS: 100,
 
   /** Décalage entre le départ de chaque gem (vols en parallèle) */
   PLACEMENT_CASCADE: {
-    MIN_STEP_MS: 0,
-    MAX_STEP_MS: 0,
-    MAX_TOTAL_MS: 0,
+    MIN_STEP_MS: 30,
+    MAX_STEP_MS: 50,
+    MAX_TOTAL_MS: 220,
   },
 
   FLOAT_AMPLITUDE: 1.5,

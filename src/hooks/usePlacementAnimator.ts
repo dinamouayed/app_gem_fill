@@ -1,5 +1,6 @@
 import { useCallback, useReducer, useRef } from "react";
 import type { CellPosition, PlacementStep } from "../types/game";
+import { computeCascadeStepDelay } from "../constants/motion";
 import { hapticSelection } from "../utils/haptics";
 
 export interface PlacementSequenceConfig {
@@ -191,6 +192,12 @@ export function usePlacementAnimator() {
 
   const sequenceRef = useRef<PlacementSequenceConfig | null>(null);
   const completedCountRef = useRef(0);
+  const launchTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearLaunchTimers = useCallback(() => {
+    launchTimersRef.current.forEach(clearTimeout);
+    launchTimersRef.current = [];
+  }, []);
 
   const finishSequence = useCallback(() => {
     const sequence = sequenceRef.current;
@@ -281,23 +288,31 @@ export function usePlacementAnimator() {
         return;
       }
 
+      clearLaunchTimers();
       sequenceRef.current = config;
       completedCountRef.current = 0;
 
       dispatch({ type: "start", config });
 
+      const stepDelayMs = computeCascadeStepDelay(config.steps.length);
+
       config.steps.forEach((_, index) => {
-        launchFlight(index);
+        const timer = setTimeout(() => {
+          launchFlight(index);
+        }, index * stepDelayMs);
+
+        launchTimersRef.current.push(timer);
       });
     },
-    [launchFlight],
+    [clearLaunchTimers, launchFlight],
   );
 
   const cancelSequence = useCallback(() => {
+    clearLaunchTimers();
     sequenceRef.current = null;
     completedCountRef.current = 0;
     dispatch({ type: "cancel" });
-  }, []);
+  }, [clearLaunchTimers]);
 
   return {
     displayGrid: state.displayGrid,

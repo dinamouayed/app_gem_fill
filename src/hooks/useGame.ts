@@ -14,12 +14,25 @@ import {
   moveGroupToBoard,
   moveReserveGroupToBoard,
 } from "../utils/floodFill";
+import type { PlacementStep } from "../types/game";
+import { buildPlacementSteps } from "./usePlacementAnimator";
 import {
   hapticSelection,
   hapticImpactLight,
   hapticSuccess,
   hapticError,
 } from "../utils/haptics";
+
+export type PlacementAnimationRequest = {
+  initialGrid: (string | null)[][];
+  initialReserve?: (string | null)[];
+  steps: PlacementStep[];
+  onComplete: () => void;
+};
+
+export type UseGameOptions = {
+  onPlacementAnimation?: (request: PlacementAnimationRequest) => void;
+};
 
 export const RESERVE_CAPACITY = 12;
 
@@ -56,6 +69,7 @@ const sortReserveByColor = (
 export function useGame(
   level: Level,
   onVictoryCallback?: (moves: number, time: number, stars: number) => void,
+  options?: UseGameOptions,
 ) {
   const [grid, setGrid] = useState<(string | null)[][]>([]);
 
@@ -125,6 +139,18 @@ export function useGame(
       }
     },
     [level.targetGrid],
+  );
+
+  const tryAnimatePlacement = useCallback(
+    (request: PlacementAnimationRequest): boolean => {
+      if (request.steps.length === 0 || !options?.onPlacementAnimation) {
+        return false;
+      }
+
+      options.onPlacementAnimation(request);
+      return true;
+    },
+    [options?.onPlacementAnimation],
   );
 
   const trySelectBoardGemGroup = useCallback(
@@ -335,22 +361,49 @@ export function useGame(
           ? currentSelectedReserveColorId
           : null;
 
-        gridRef.current = boardMove.nextGrid;
-        reserveRef.current = sortedReserve;
-        selectedPositionsRef.current = [];
-        selectedReserveColorIdRef.current = nextSelectedReserveColorId;
-        movesRef.current = nextMoves;
+        const applyReservePlacement = () => {
+          gridRef.current = boardMove.nextGrid;
+          reserveRef.current = sortedReserve;
+          selectedPositionsRef.current = [];
+          selectedReserveColorIdRef.current = nextSelectedReserveColorId;
+          movesRef.current = nextMoves;
 
-        setMoves(nextMoves);
-        setGrid(boardMove.nextGrid);
-        setReserve(sortedReserve);
-        setSelectedPositions([]);
-        setSelectedReserveColorId(nextSelectedReserveColorId);
-        triggerPlacementHaptic(
+          setMoves(nextMoves);
+          setGrid(boardMove.nextGrid);
+          setReserve(sortedReserve);
+          setSelectedPositions([]);
+          setSelectedReserveColorId(nextSelectedReserveColorId);
+          triggerPlacementHaptic(
+            boardMove.placedPositions,
+            currentSelectedReserveColorId,
+          );
+          verifyStateAndSave(boardMove.nextGrid, sortedReserve, nextMoves);
+        };
+
+        const steps = buildPlacementSteps(
           boardMove.placedPositions,
+          [],
           currentSelectedReserveColorId,
+          level.targetGrid,
+          boardMove.sourceReserveIndices,
         );
-        verifyStateAndSave(boardMove.nextGrid, sortedReserve, nextMoves);
+
+        if (
+          tryAnimatePlacement({
+            initialGrid: currentGrid,
+            initialReserve: currentReserve,
+            steps,
+            onComplete: applyReservePlacement,
+          })
+        ) {
+          selectedPositionsRef.current = [];
+          selectedReserveColorIdRef.current = nextSelectedReserveColorId;
+          setSelectedPositions([]);
+          setSelectedReserveColorId(nextSelectedReserveColorId);
+          return;
+        }
+
+        applyReservePlacement();
 
         return;
       }
@@ -402,17 +455,42 @@ export function useGame(
         if (boardMove.movedGemIds.length > 0) {
           const nextMoves = currentMoves + 1;
 
-          gridRef.current = boardMove.nextGrid;
-          selectedPositionsRef.current = boardMove.remainingSelectedPositions;
-          selectedReserveColorIdRef.current = null;
-          movesRef.current = nextMoves;
+          const applyBoardPlacement = () => {
+            gridRef.current = boardMove.nextGrid;
+            selectedPositionsRef.current = boardMove.remainingSelectedPositions;
+            selectedReserveColorIdRef.current = null;
+            movesRef.current = nextMoves;
 
-          setMoves(nextMoves);
-          setGrid(boardMove.nextGrid);
-          setSelectedPositions(boardMove.remainingSelectedPositions);
-          setSelectedReserveColorId(null);
-          triggerPlacementHaptic(boardMove.placedPositions, selectedColor!);
-          verifyStateAndSave(boardMove.nextGrid, currentReserve, nextMoves);
+            setMoves(nextMoves);
+            setGrid(boardMove.nextGrid);
+            setSelectedPositions(boardMove.remainingSelectedPositions);
+            setSelectedReserveColorId(null);
+            triggerPlacementHaptic(boardMove.placedPositions, selectedColor!);
+            verifyStateAndSave(boardMove.nextGrid, currentReserve, nextMoves);
+          };
+
+          const steps = buildPlacementSteps(
+            boardMove.placedPositions,
+            boardMove.sourcePositions,
+            selectedColor!,
+            level.targetGrid,
+          );
+
+          if (
+            tryAnimatePlacement({
+              initialGrid: currentGrid,
+              steps,
+              onComplete: applyBoardPlacement,
+            })
+          ) {
+            selectedPositionsRef.current = boardMove.remainingSelectedPositions;
+            selectedReserveColorIdRef.current = null;
+            setSelectedPositions(boardMove.remainingSelectedPositions);
+            setSelectedReserveColorId(null);
+            return;
+          }
+
+          applyBoardPlacement();
         } else {
           setSelectedPositions([]);
           setSelectedReserveColorId(null);
@@ -441,6 +519,7 @@ export function useGame(
       triggerPlacementHaptic,
       trySelectBoardGemGroup,
       verifyStateAndSave,
+      tryAnimatePlacement,
     ],
   );
 

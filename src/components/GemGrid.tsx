@@ -1,9 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { View, StyleSheet, useWindowDimensions } from "react-native";
 import { GemSlot } from "./GemSlot";
+import { PlacementFlightGem } from "./PlacementFlightGem";
 import { GemColor } from "../types/level";
 import { CellPosition } from "../types/game";
 import { cellKey } from "../constants/motion";
+import { useGridCellAnimations } from "../hooks/useGridCellAnimations";
+import type { ActivePlacementFlight } from "../hooks/usePlacementAnimator";
 
 interface GemGridProps {
   rows: number;
@@ -16,6 +19,11 @@ interface GemGridProps {
   onCellSizeChange?: (cellSize: number) => void;
   onCellPress: (row: number, col: number) => void;
   onCellLongPress?: (row: number, col: number) => void;
+  interactionsDisabled?: boolean;
+  settlingDestinations?: CellPosition[];
+  activeFlights?: ActivePlacementFlight[];
+  onFlightLand?: (stepIndex: number) => void;
+  onFlightDismiss?: (stepIndex: number) => void;
 }
 
 export const GemGrid: React.FC<GemGridProps> = ({
@@ -29,9 +37,16 @@ export const GemGrid: React.FC<GemGridProps> = ({
   onCellSizeChange,
   onCellPress,
   onCellLongPress,
+  interactionsDisabled = false,
+  settlingDestinations = [],
+  activeFlights = [],
+  onFlightLand,
+  onFlightDismiss,
 }) => {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const cellRefs = useRef<Map<string, View>>(new Map());
+
+  const cellAnimations = useGridCellAnimations(currentGrid, targetGrid);
 
   const cellSize = useMemo(() => {
     const horizontalMargin = 32;
@@ -68,8 +83,42 @@ export const GemGrid: React.FC<GemGridProps> = ({
     [onCellRefRegister],
   );
 
+  const isSettlingCell = useCallback(
+    (row: number, col: number) =>
+      settlingDestinations.some(
+        (position) => position.row === row && position.col === col,
+      ),
+    [settlingDestinations],
+  );
+
+  const handleCellPress = useCallback(
+    (row: number, col: number) => {
+      if (interactionsDisabled) {
+        return;
+      }
+
+      onCellPress(row, col);
+    },
+    [interactionsDisabled, onCellPress],
+  );
+
+  const handleCellLongPress = useCallback(
+    (row: number, col: number) => {
+      if (interactionsDisabled) {
+        return;
+      }
+
+      onCellLongPress?.(row, col);
+    },
+    [interactionsDisabled, onCellLongPress],
+  );
+
+  const boardFlights = activeFlights.filter(
+    (flight) => flight.step.source !== undefined,
+  );
+
   return (
-    <View style={styles.gridWrapper}>
+    <View style={styles.gridWrapper} pointerEvents={interactionsDisabled ? "none" : "auto"}>
       <View style={styles.gridContainer}>
         {targetGrid.map((rowArray, rowIndex) => (
           <View key={`row-${rowIndex}`} style={styles.row}>
@@ -92,6 +141,10 @@ export const GemGrid: React.FC<GemGridProps> = ({
                   position.row === rowIndex && position.col === columnIndex,
               );
 
+              const animationConfig = cellAnimations.get(
+                cellKey(rowIndex, columnIndex),
+              );
+
               return (
                 <GemSlot
                   key={`slot-${rowIndex}-${columnIndex}`}
@@ -100,21 +153,41 @@ export const GemGrid: React.FC<GemGridProps> = ({
                   currentColor={currentColor}
                   isSelected={isSelected}
                   isDimmed={false}
-                  placementPulseToken={0}
-                  cascadeDelayMs={0}
-                  entryRotationDeg={0}
-                  isCorrectPlacement={false}
-                  isSettling={false}
+                  placementPulseToken={animationConfig?.pulseToken ?? 0}
+                  cascadeDelayMs={animationConfig?.cascadeDelayMs ?? 0}
+                  entryRotationDeg={animationConfig?.entryRotationDeg ?? 0}
+                  isCorrectPlacement={
+                    animationConfig?.isCorrectPlacement ?? false
+                  }
+                  isSettling={isSettlingCell(rowIndex, columnIndex)}
                   cellRef={(node) =>
                     registerCellRef(rowIndex, columnIndex, node)
                   }
-                  onPress={() => onCellPress(rowIndex, columnIndex)}
-                  onLongPress={() => onCellLongPress?.(rowIndex, columnIndex)}
+                  onPress={() => handleCellPress(rowIndex, columnIndex)}
+                  onLongPress={() =>
+                    handleCellLongPress(rowIndex, columnIndex)
+                  }
                 />
               );
             })}
           </View>
         ))}
+
+        {boardFlights.map(({ step, stepIndex }) => {
+          const colorHex = paletteMap[step.colorId]?.hex ?? "#64748B";
+
+          return (
+            <PlacementFlightGem
+              key={`board-flight-${stepIndex}-${step.dest.row}-${step.dest.col}`}
+              step={step}
+              stepIndex={stepIndex}
+              colorHex={colorHex}
+              cellSize={cellSize}
+              onLand={onFlightLand ?? (() => {})}
+              onDismiss={onFlightDismiss ?? (() => {})}
+            />
+          );
+        })}
       </View>
     </View>
   );

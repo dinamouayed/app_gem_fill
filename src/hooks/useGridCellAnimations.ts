@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   MOTION,
   cellKey,
+  computeCascadeStepDelay,
   type CellKey,
 } from "../constants/motion";
 
@@ -164,7 +165,7 @@ export function useGridCellAnimations(
       const config = nextAnimations.get(key);
 
       if (config) {
-        config.cascadeDelayMs = index * MOTION.CASCADE_DELAY_MS;
+        config.cascadeDelayMs = index * computeCascadeStepDelay(correctPlacements.length);
       }
     });
 
@@ -172,7 +173,7 @@ export function useGridCellAnimations(
 
     const clearTimer = setTimeout(() => {
       setAnimations(new Map());
-    }, 450);
+    }, 700);
 
     return () => clearTimeout(clearTimer);
   }, [currentGrid, targetGrid, enabled]);
