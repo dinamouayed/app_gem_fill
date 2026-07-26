@@ -79,10 +79,13 @@ export default function SettingsScreen() {
             <HelpCircle size={20} color="#F59E0B" style={{ marginBottom: 6 }} />
             <Text style={styles.guideTitle}>Comment jouer à Gem Fill ?</Text>
             <Text style={styles.guideText}>
-              1. Observez la couleur cible en fond translucide sous chaque case.{'\n'}
-              2. Touchez une gemme puis une case cible pour la déplacer ou l'échanger.{'\n'}
-              3. Utilisez la **Zone de Réserve** en bas de l'écran pour stocker jusqu'à 4 gemmes temporairement afin de faciliter les permutations.{'\n'}
-              4. Replacez toutes les gemmes sur les bonnes cases pour révéler l'image en pixel art !
+              {'\u2022'} Chaque case affiche en fond la couleur cible : c'est là que la gemme correspondante doit se trouver.{'\n\n'}
+              {'\u2022'} Touchez une gemme mal placée pour sélectionner tout son groupe (gemmes de même couleur connectées). Les gemmes déjà bien placées sont verrouillées.{'\n\n'}
+              {'\u2022'} Avec un groupe sélectionné, touchez une case vide dont la couleur cible correspond pour y placer les gemmes.{'\n\n'}
+              {'\u2022'} Le plateau est souvent plein : utilisez la Zone de Réserve (12 emplacements en bas) pour libérer des cases. Touchez un emplacement vide de la réserve pour y envoyer le groupe sélectionné.{'\n\n'}
+              {'\u2022'} Depuis la réserve, touchez une couleur de gemme puis une case vide compatible pour la replacer sur le plateau.{'\n\n'}
+              {'\u2022'} Appui long sur une gemme : envoi direct vers la réserve.{'\n\n'}
+              {'\u2022'} Objectif : toutes les gemmes sur les bonnes cases pour révéler l'image en pixel art !
             </Text>
           </View>
         </View>

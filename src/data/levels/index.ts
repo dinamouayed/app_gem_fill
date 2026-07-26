@@ -146,14 +146,14 @@ export function getUnlockedLevelIndex(currentUnlockedLevel: number): number {
 
 export function isLevelUnlocked(levelId: number, currentUnlockedLevel: number): boolean {
   // DEBUG — tous les niveaux déverrouillés pour les tests
-  return ALL_LEVELS.some((level) => level.id === levelId);
+  // return ALL_LEVELS.some((level) => level.id === levelId);
 
-  // const levelIndex = ALL_LEVELS.findIndex((level) => level.id === levelId);
-  // if (levelIndex === -1) {
-  //   return false;
-  // }
-  //
-  // return levelIndex <= getUnlockedLevelIndex(currentUnlockedLevel);
+  const levelIndex = ALL_LEVELS.findIndex((level) => level.id === levelId);
+  if (levelIndex === -1) {
+    return false;
+  }
+  
+  return levelIndex <= getUnlockedLevelIndex(currentUnlockedLevel);
 }
 
 export function getCurrentLevel(currentUnlockedLevel: number): Level {

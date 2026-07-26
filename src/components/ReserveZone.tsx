@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Gem } from "./Gem";
+import { TutorialFinger } from "./TutorialFinger";
 import { GemColor } from "../types/level";
 import { Inbox } from "lucide-react-native";
 
@@ -8,6 +9,7 @@ interface ReserveZoneProps {
   reserve: (string | null)[];
   paletteMap: Record<string, GemColor>;
   selectedReserveColorId: string | null;
+  tutorialTargetSlotIndex?: number | null;
   onSlotPress: (index: number) => void;
 }
 
@@ -19,6 +21,7 @@ interface ReserveSlotProps {
   slotSize: number;
   paletteMap: Record<string, GemColor>;
   selectedReserveColorId: string | null;
+  isTutorialTarget?: boolean;
   onSlotPress: (index: number) => void;
 }
 
@@ -28,6 +31,7 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
   slotSize,
   paletteMap,
   selectedReserveColorId,
+  isTutorialTarget = false,
   onSlotPress,
 }) => {
   const gemColor = gemId ? (paletteMap[gemId] ?? null) : null;
@@ -49,6 +53,7 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
             ? "transparent"
             : "rgba(30, 41, 59, 0.6)",
         },
+        isTutorialTarget && styles.tutorialSlot,
       ]}
     >
       {gemColor ? (
@@ -62,6 +67,12 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
       ) : (
         <Text style={styles.emptyIndex}>{index + 1}</Text>
       )}
+
+      {isTutorialTarget && (
+        <View style={styles.fingerOverlay} pointerEvents="none">
+          <TutorialFinger size={28} />
+        </View>
+      )}
     </Pressable>
   );
 };
@@ -70,6 +81,7 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
   reserve,
   paletteMap,
   selectedReserveColorId,
+  tutorialTargetSlotIndex = null,
   onSlotPress,
 }) => {
   const occupiedCount = reserve.filter((item) => item !== null).length;
@@ -108,6 +120,7 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
                   slotSize={slotSize}
                   paletteMap={paletteMap}
                   selectedReserveColorId={selectedReserveColorId}
+                  isTutorialTarget={tutorialTargetSlotIndex === slotIndex}
                   onSlotPress={onSlotPress}
                 />
               );
@@ -184,6 +197,24 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: "rgba(255, 255, 255, 0.15)",
     overflow: "visible",
+  },
+
+  tutorialSlot: {
+    borderColor: "#38BDF8",
+    borderWidth: 3,
+    borderStyle: "solid",
+    shadowColor: "#38BDF8",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
+  fingerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 20,
   },
 
   emptyIndex: {

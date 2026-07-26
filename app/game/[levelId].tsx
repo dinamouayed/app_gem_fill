@@ -6,12 +6,14 @@ import { Lightbulb } from 'lucide-react-native';
 import { getLevelById, ALL_LEVELS } from '../../src/data/levels';
 import { GemColor } from '../../src/types/level';
 import { useGame } from '../../src/hooks/useGame';
+import { useLevel1Tutorial } from '../../src/hooks/useLevel1Tutorial';
 import { useProgress } from '../../src/hooks/useProgress';
 import { HeaderBar } from '../../src/components/HeaderBar';
 import { GemGrid } from '../../src/components/GemGrid';
 import { ZoomableBoard } from '../../src/components/ZoomableBoard';
 import { ReserveZone } from '../../src/components/ReserveZone';
 import { VictoryModal } from '../../src/components/VictoryModal';
+import { Level1TutorialBanner } from '../../src/components/Level1TutorialBanner';
 
 export default function GameScreen() {
   const router = useRouter();
@@ -59,6 +61,23 @@ export default function GameScreen() {
     moveGemToReserve,
     restartLevel,
   } = useGame(level, handleVictory);
+
+  const {
+    isActive: isTutorialActive,
+    targetCell: tutorialTargetCell,
+    targetReserveSlot: tutorialTargetReserveSlot,
+    message: tutorialMessage,
+    stepIndex: tutorialStepIndex,
+    totalSteps: tutorialTotalSteps,
+  } = useLevel1Tutorial(
+    level.id,
+    grid,
+    level.targetGrid,
+    selectedPositions,
+    reserve,
+    moves,
+    isInitialized,
+  );
 
   const handleHint = () => {
     let misplacedRow = -1;
@@ -122,6 +141,14 @@ export default function GameScreen() {
       </View>
 
       <View style={styles.playfield}>
+        {isTutorialActive && tutorialMessage ? (
+          <Level1TutorialBanner
+            message={tutorialMessage}
+            stepIndex={tutorialStepIndex}
+            totalSteps={tutorialTotalSteps}
+          />
+        ) : null}
+
         <View style={styles.gridArea}>
           <ZoomableBoard>
             <GemGrid
@@ -131,6 +158,7 @@ export default function GameScreen() {
               currentGrid={grid}
               paletteMap={paletteMap}
               selectedPositions={selectedPositions}
+              tutorialTargetCell={isTutorialActive ? tutorialTargetCell : null}
               onCellPress={(r, c) => handleCellTap(r, c)}
               onCellLongPress={(r, c) => moveGemToReserve(r, c)}
             />
@@ -141,6 +169,7 @@ export default function GameScreen() {
           reserve={reserve}
           paletteMap={paletteMap}
           selectedReserveColorId={selectedReserveColorId}
+          tutorialTargetSlotIndex={isTutorialActive ? tutorialTargetReserveSlot : null}
           onSlotPress={(idx) => handleReserveTap(idx)}
         />
       </View>
@@ -229,6 +258,7 @@ const styles = StyleSheet.create({
   },
   playfield: {
     flex: 1,
+    position: 'relative',
   },
   gridArea: {
     flex: 1,

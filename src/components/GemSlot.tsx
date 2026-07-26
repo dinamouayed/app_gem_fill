@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { View, StyleSheet, Pressable } from "react-native";
 import { Gem } from "./Gem";
 import { GemVisual } from "./GemVisual";
+import { TutorialFinger } from "./TutorialFinger";
 import { GemColor } from "../types/level";
 
 interface GemSlotProps {
@@ -10,6 +11,7 @@ interface GemSlotProps {
   currentColor: GemColor | null;
   isSelected?: boolean;
   isDimmed?: boolean;
+  isTutorialTarget?: boolean;
   onPress: () => void;
   onLongPress?: () => void;
 }
@@ -20,6 +22,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
   currentColor,
   isSelected = false,
   isDimmed = false,
+  isTutorialTarget = false,
   onPress,
   onLongPress,
 }) => {
@@ -35,10 +38,23 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
           width: size,
           height: size,
           backgroundColor: targetColor.hex,
-          zIndex: isSelected ? 10 : 0,
+          zIndex: isSelected || isTutorialTarget ? 10 : 0,
         },
       ]}
     >
+      {isTutorialTarget && (
+        <View
+          pointerEvents="none"
+          style={[
+            styles.tutorialRing,
+            {
+              width: size + 6,
+              height: size + 6,
+              borderRadius: 4,
+            },
+          ]}
+        />
+      )}
       {!currentColor && (
         <Pressable
           onPress={onPress}
@@ -98,6 +114,12 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
           <GemVisual colorHex={currentColor.hex} size={settledGemSize} variant="correct" />
         </Pressable>
       )}
+
+      {isTutorialTarget && (
+        <View style={styles.fingerOverlay} pointerEvents="none">
+          <TutorialFinger size={Math.min(32, Math.max(22, size * 0.55))} />
+        </View>
+      )}
     </View>
   );
 });
@@ -132,6 +154,17 @@ const styles = StyleSheet.create({
     overflow: "visible",
   },
 
+  tutorialRing: {
+    position: "absolute",
+    borderWidth: 3,
+    borderColor: "#38BDF8",
+    shadowColor: "#38BDF8",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+
   fullHitArea: {
     width: "100%",
     height: "100%",
@@ -156,5 +189,12 @@ const styles = StyleSheet.create({
     width: "82%",
     height: "82%",
     opacity: 0.9,
+  },
+
+  fingerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 20,
   },
 });

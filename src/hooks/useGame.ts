@@ -455,12 +455,34 @@ export function useGame(
         return;
       }
 
+      const selectedGemId = reserveRef.current[index];
+      const currentSelectedReserveColorId = selectedReserveColorIdRef.current;
+
       /*
        * Cas 1 :
        * un groupe du plateau est sélectionné.
-       * Le groupe est envoyé dans la réserve.
+       * Tap sur une gemme occupée → bascule la sélection vers la réserve.
+       * Tap sur un emplacement vide → envoie le groupe dans la réserve.
        */
       if (selectedPositionsRef.current.length > 0) {
+        if (selectedGemId !== null) {
+          if (currentSelectedReserveColorId === selectedGemId) {
+            selectedReserveColorIdRef.current = null;
+            selectedPositionsRef.current = [];
+            setSelectedReserveColorId(null);
+            setSelectedPositions([]);
+            triggerSelectionHaptic();
+          } else {
+            selectedReserveColorIdRef.current = selectedGemId;
+            selectedPositionsRef.current = [];
+            setSelectedReserveColorId(selectedGemId);
+            setSelectedPositions([]);
+            triggerSelectionHaptic();
+          }
+
+          return;
+        }
+
         const currentGrid = gridRef.current;
         const currentReserve = reserveRef.current;
         const currentSelectedPositions = selectedPositionsRef.current;
@@ -510,9 +532,6 @@ export function useGame(
        * Cas 2 :
        * sélection d'une couleur dans la réserve.
        */
-      const selectedGemId = reserveRef.current[index];
-      const currentSelectedReserveColorId = selectedReserveColorIdRef.current;
-
       if (selectedGemId !== null) {
         if (currentSelectedReserveColorId === selectedGemId) {
           selectedReserveColorIdRef.current = null;

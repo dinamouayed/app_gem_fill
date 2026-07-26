@@ -11,6 +11,7 @@ interface GemGridProps {
   currentGrid: (string | null)[][];
   paletteMap: Record<string, GemColor>;
   selectedPositions: CellPosition[];
+  tutorialTargetCell?: CellPosition | null;
   onCellPress: (row: number, col: number) => void;
   onCellLongPress?: (row: number, col: number) => void;
 }
@@ -22,6 +23,7 @@ export const GemGrid: React.FC<GemGridProps> = ({
   currentGrid,
   paletteMap,
   selectedPositions,
+  tutorialTargetCell = null,
   onCellPress,
   onCellLongPress,
 }) => {
@@ -67,6 +69,10 @@ export const GemGrid: React.FC<GemGridProps> = ({
                   position.row === rowIndex && position.col === columnIndex,
               );
 
+              const isTutorialTarget =
+                tutorialTargetCell?.row === rowIndex &&
+                tutorialTargetCell?.col === columnIndex;
+
               return (
                 <GemSlot
                   key={`slot-${rowIndex}-${columnIndex}`}
@@ -74,6 +80,7 @@ export const GemGrid: React.FC<GemGridProps> = ({
                   targetColor={targetColor}
                   currentColor={currentColor}
                   isSelected={isSelected}
+                  isTutorialTarget={isTutorialTarget}
                   onPress={() => onCellPress(rowIndex, columnIndex)}
                   onLongPress={() => onCellLongPress?.(rowIndex, columnIndex)}
                 />
