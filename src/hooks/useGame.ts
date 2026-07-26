@@ -15,11 +15,12 @@ import {
   moveReserveGroupToBoard,
 } from "../utils/floodFill";
 import {
-  hapticSelection,
-  hapticImpactLight,
-  hapticSuccess,
-  hapticError,
-} from "../utils/haptics";
+  feedbackCorrectPlacement,
+  feedbackError,
+  feedbackPlacement,
+  feedbackSelection,
+  feedbackSuccess,
+} from "../utils/feedback";
 
 export const RESERVE_CAPACITY = 12;
 
@@ -98,33 +99,30 @@ export function useGame(
   const paletteOrder = level.palette.map((color) => color.id);
 
   const triggerSelectionHaptic = useCallback(() => {
-    hapticSelection();
+    feedbackSelection();
   }, []);
 
   const triggerHaptic = useCallback(() => {
-    hapticImpactLight();
+    feedbackPlacement();
   }, []);
 
   const triggerSuccessHaptic = useCallback(() => {
-    hapticSuccess();
+    feedbackSuccess();
   }, []);
 
   const triggerErrorHaptic = useCallback(() => {
-    hapticError();
+    feedbackError();
   }, []);
 
-  const triggerPlacementHaptic = useCallback(
-    (placedPositions: CellPosition[], colorId: string) => {
-      const placedCorrectly = placedPositions.some(
-        (position) =>
-          level.targetGrid[position.row]?.[position.col] === colorId,
-      );
-
-      if (placedCorrectly) {
-        hapticSelection();
+  const triggerPlacementFeedback = useCallback(
+    (placedPositions: CellPosition[]) => {
+      if (placedPositions.length === 0) {
+        return;
       }
+
+      feedbackCorrectPlacement();
     },
-    [level.targetGrid],
+    [],
   );
 
   const trySelectBoardGemGroup = useCallback(
@@ -335,8 +333,6 @@ export function useGame(
           ? currentSelectedReserveColorId
           : null;
 
-        triggerHaptic();
-
         gridRef.current = boardMove.nextGrid;
         reserveRef.current = sortedReserve;
         selectedPositionsRef.current = [];
@@ -348,10 +344,7 @@ export function useGame(
         setReserve(sortedReserve);
         setSelectedPositions([]);
         setSelectedReserveColorId(nextSelectedReserveColorId);
-        triggerPlacementHaptic(
-          boardMove.placedPositions,
-          currentSelectedReserveColorId,
-        );
+        triggerPlacementFeedback(boardMove.placedPositions);
         verifyStateAndSave(boardMove.nextGrid, sortedReserve, nextMoves);
 
         return;
@@ -404,8 +397,6 @@ export function useGame(
         if (boardMove.movedGemIds.length > 0) {
           const nextMoves = currentMoves + 1;
 
-          triggerHaptic();
-
           gridRef.current = boardMove.nextGrid;
           selectedPositionsRef.current = boardMove.remainingSelectedPositions;
           selectedReserveColorIdRef.current = null;
@@ -415,7 +406,7 @@ export function useGame(
           setGrid(boardMove.nextGrid);
           setSelectedPositions(boardMove.remainingSelectedPositions);
           setSelectedReserveColorId(null);
-          triggerPlacementHaptic(boardMove.placedPositions, selectedColor!);
+          triggerPlacementFeedback(boardMove.placedPositions);
           verifyStateAndSave(boardMove.nextGrid, currentReserve, nextMoves);
         } else {
           setSelectedPositions([]);
@@ -442,7 +433,7 @@ export function useGame(
       level.targetGrid,
       paletteOrder,
       triggerSelectionHaptic,
-      triggerPlacementHaptic,
+      triggerPlacementFeedback,
       trySelectBoardGemGroup,
       verifyStateAndSave,
       triggerHaptic,

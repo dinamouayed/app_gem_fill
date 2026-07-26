@@ -13,6 +13,8 @@ import {
   resetAllProgress,
   saveUserProgress,
 } from "../services/progressStorage";
+import { syncFeedbackSettings } from "../services/feedbackSettings";
+import { initSounds } from "../utils/sounds";
 
 interface ReloadOptions {
   silent?: boolean;
@@ -48,6 +50,11 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     }
 
     const data = await getUserProgress();
+    syncFeedbackSettings({
+      hapticsEnabled: data.hapticsEnabled,
+      soundEnabled: data.soundEnabled,
+    });
+    void initSounds();
     setProgress(data);
     hasLoadedOnce.current = true;
     setLoading(false);
@@ -89,6 +96,10 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       }
 
       const updated = { ...current, soundEnabled: !current.soundEnabled };
+      syncFeedbackSettings({
+        hapticsEnabled: updated.hapticsEnabled,
+        soundEnabled: updated.soundEnabled,
+      });
       void saveUserProgress(updated);
       return updated;
     });
@@ -101,6 +112,10 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       }
 
       const updated = { ...current, hapticsEnabled: !current.hapticsEnabled };
+      syncFeedbackSettings({
+        hapticsEnabled: updated.hapticsEnabled,
+        soundEnabled: updated.soundEnabled,
+      });
       void saveUserProgress(updated);
       return updated;
     });

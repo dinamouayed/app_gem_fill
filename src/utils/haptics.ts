@@ -1,6 +1,11 @@
 import * as Haptics from "expo-haptics";
+import { isHapticsEnabled } from "../services/feedbackSettings";
 
 const safe = (fn: () => Promise<void>) => {
+  if (!isHapticsEnabled()) {
+    return;
+  }
+
   try {
     void fn();
   } catch {

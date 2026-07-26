@@ -1,7 +1,7 @@
 import { useCallback, useReducer, useRef } from "react";
 import type { CellPosition, PlacementStep } from "../types/game";
 import { computeCascadeStepDelay } from "../constants/motion";
-import { hapticSelection } from "../utils/haptics";
+import { feedbackSelection } from "../utils/feedback";
 
 export interface PlacementSequenceConfig {
   initialGrid: (string | null)[][];
@@ -233,7 +233,7 @@ export function usePlacementAnimator() {
       const isLast = stepIndex === sequence.steps.length - 1;
 
       if (isFirst || (isLast && sequence.steps.length > 1)) {
-        hapticSelection();
+        feedbackSelection();
       }
     }
   }, []);
