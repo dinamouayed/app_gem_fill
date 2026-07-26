@@ -15,3 +15,8 @@ vi.mock("expo-audio", () => ({
   })),
   setAudioModeAsync: vi.fn(),
 }));
+
+vi.mock("expo-store-review", () => ({
+  isAvailableAsync: vi.fn().mockResolvedValue(false),
+  requestReview: vi.fn(),
+}));

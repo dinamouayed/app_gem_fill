@@ -15,6 +15,7 @@ import { ReserveZone } from '../../src/components/ReserveZone';
 import { VictoryModal } from '../../src/components/VictoryModal';
 import { Level1TutorialBanner } from '../../src/components/Level1TutorialBanner';
 import { theme } from '../../src/constants/theme';
+import { requestStoreReviewAfterLevel } from '../../src/services/storeReview';
 
 function InvalidLevelScreen({ requestedId }: { requestedId?: string }) {
   const router = useRouter();
@@ -69,6 +70,7 @@ function GameScreenContent({ level }: { level: Level }) {
       setTimeout(() => {
         setVictoryModalVisible(true);
       }, 250);
+      void requestStoreReviewAfterLevel(level.id);
     },
     [level.id, recordVictory],
   );
@@ -184,6 +186,7 @@ function GameScreenContent({ level }: { level: Level }) {
               currentGrid={grid}
               paletteMap={paletteMap}
               selectedPositions={selectedPositions}
+              selectedReserveColorId={selectedReserveColorId}
               tutorialTargetCell={isTutorialActive ? tutorialTargetCell : null}
               onCellPress={(r, c) => handleCellTap(r, c)}
               onCellLongPress={(r, c) => moveGemToReserve(r, c)}

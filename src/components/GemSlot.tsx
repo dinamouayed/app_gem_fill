@@ -13,6 +13,7 @@ interface GemSlotProps {
   isSelected?: boolean;
   isDimmed?: boolean;
   isTutorialTarget?: boolean;
+  suppressTouch?: boolean;
   onPress: () => void;
   onLongPress?: () => void;
 }
@@ -24,9 +25,13 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
   isSelected = false,
   isDimmed = false,
   isTutorialTarget = false,
+  suppressTouch = false,
   onPress,
   onLongPress,
 }) => {
+  const pressableProps = suppressTouch
+    ? { pointerEvents: "none" as const }
+    : {};
   const isMatch = currentColor?.id === targetColor.id;
   const movableGemSize = Math.max(12, size - 2);
   const settledGemSize = Math.max(12, size);
@@ -62,6 +67,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
           onLongPress={onLongPress}
           hitSlop={6}
           style={styles.fullHitArea}
+          {...pressableProps}
         >
           <View
             style={[
@@ -93,6 +99,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
           onLongPress={onLongPress}
           hitSlop={6}
           style={styles.fullHitArea}
+          {...pressableProps}
         >
           <Gem
             colorHex={currentColor.hex}
@@ -111,6 +118,7 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
           onLongPress={onLongPress}
           hitSlop={6}
           style={styles.fullHitArea}
+          {...pressableProps}
         >
           <GemVisual colorHex={currentColor.hex} size={settledGemSize} variant="correct" />
         </Pressable>
