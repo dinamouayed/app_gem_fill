@@ -4,6 +4,7 @@ import { Gem } from "./Gem";
 import { GemVisual } from "./GemVisual";
 import { TutorialFinger } from "./TutorialFinger";
 import { GemColor } from "../types/level";
+import { theme } from '../constants/theme';
 
 interface GemSlotProps {
   size: number;
@@ -124,6 +125,8 @@ export const GemSlot: React.FC<GemSlotProps> = memo(({
   );
 });
 
+GemSlot.displayName = "GemSlot";
+
 const darkenHex = (hex: string, amount: number): string => {
   const normalizedHex = hex.replace("#", "");
 
@@ -157,8 +160,8 @@ const styles = StyleSheet.create({
   tutorialRing: {
     position: "absolute",
     borderWidth: 3,
-    borderColor: "#38BDF8",
-    shadowColor: "#38BDF8",
+    borderColor: theme.colors.accent,
+    shadowColor: theme.colors.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 6,
@@ -177,12 +180,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderTopWidth: 2,
     borderLeftWidth: 2,
-    borderTopColor: "rgba(0, 0, 0, 0.4)",
-    borderLeftColor: "rgba(0, 0, 0, 0.4)",
+    borderTopColor: theme.colors.holeShadowDark,
+    borderLeftColor: theme.colors.holeShadowDark,
     borderBottomWidth: 1.5,
     borderRightWidth: 1.5,
-    borderBottomColor: "rgba(255, 255, 255, 0.22)",
-    borderRightColor: "rgba(255, 255, 255, 0.22)",
+    borderBottomColor: theme.colors.holeHighlight,
+    borderRightColor: theme.colors.holeHighlight,
   },
 
   holeInner: {

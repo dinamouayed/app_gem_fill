@@ -4,6 +4,7 @@ import { Gem } from "./Gem";
 import { TutorialFinger } from "./TutorialFinger";
 import { GemColor } from "../types/level";
 import { Inbox } from "lucide-react-native";
+import { theme } from '../constants/theme';
 
 interface ReserveZoneProps {
   reserve: (string | null)[];
@@ -51,7 +52,7 @@ const ReserveSlot: React.FC<ReserveSlotProps> = ({
           borderRadius: Math.round(slotSize * 0.2),
           backgroundColor: gemColor
             ? "transparent"
-            : "rgba(30, 41, 59, 0.6)",
+            : theme.colors.surfaceTranslucent,
         },
         isTutorialTarget && styles.tutorialSlot,
       ]}
@@ -97,7 +98,7 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Inbox size={18} color="#94A3B8" style={styles.titleIcon} />
+          <Inbox size={18} color={theme.colors.textMuted} style={styles.titleIcon} />
           <Text style={styles.titleText}>Zone de Réserve</Text>
         </View>
 
@@ -134,15 +135,15 @@ export const ReserveZone: React.FC<ReserveZoneProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#1E293B",
+    backgroundColor: theme.colors.surface,
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,
     marginHorizontal: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: "#334155",
-    shadowColor: "#000",
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -166,14 +167,14 @@ const styles = StyleSheet.create({
   },
 
   titleText: {
-    color: "#E2E8F0",
+    color: theme.colors.textSecondary,
     fontSize: 13,
     fontWeight: "600",
     letterSpacing: 0.3,
   },
 
   capacityText: {
-    color: "#94A3B8",
+    color: theme.colors.textMuted,
     fontSize: 12,
     fontWeight: "500",
   },
@@ -195,15 +196,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 1.5,
     borderStyle: "dashed",
-    borderColor: "rgba(255, 255, 255, 0.15)",
+    borderColor: theme.colors.slotBorder,
     overflow: "visible",
   },
 
   tutorialSlot: {
-    borderColor: "#38BDF8",
+    borderColor: theme.colors.accent,
     borderWidth: 3,
     borderStyle: "solid",
-    shadowColor: "#38BDF8",
+    shadowColor: theme.colors.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 6,
@@ -218,7 +219,7 @@ const styles = StyleSheet.create({
   },
 
   emptyIndex: {
-    color: "#475569",
+    color: theme.colors.textFaint,
     fontSize: 12,
     fontWeight: "700",
   },

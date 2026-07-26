@@ -6,6 +6,7 @@ import { Play, Grid, Settings, Gem as GemIcon, Award, Sparkles, RefreshCw } from
 import { useProgress } from '../src/hooks/useProgress';
 import { getCurrentLevel, getTotalLevelsCount } from '../src/data/levels';
 import { LinearGradient } from 'expo-linear-gradient';
+import { theme } from '../src/constants/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -36,10 +37,10 @@ export default function HomeScreen() {
         {/* Header Logo */}
         <View style={styles.logoContainer}>
           <LinearGradient
-            colors={['#38BDF8', '#0284C7', '#6366F1']}
+            colors={[theme.colors.accent, theme.colors.accentDark, theme.colors.indigo]}
             style={styles.logoBadge}
           >
-            <GemIcon size={44} color="#FFF" />
+            <GemIcon size={44} color={theme.colors.white} />
           </LinearGradient>
           <Text style={styles.appTitle}>GEM FILL</Text>
           <Text style={styles.appSubtitle}>Pixel Art Mosaic Puzzle</Text>
@@ -49,12 +50,12 @@ export default function HomeScreen() {
         <View style={styles.currentLevelCard}>
           <View style={styles.cardHeader}>
             <View style={styles.levelBadge}>
-              <Sparkles size={14} color="#F59E0B" style={{ marginRight: 4 }} />
+              <Sparkles size={14} color={theme.colors.warning} style={{ marginRight: 4 }} />
               <Text style={styles.levelBadgeText}>PROCHAIN DÉFI</Text>
             </View>
             {hasActiveSave && (
               <View style={styles.resumeBadge}>
-                <RefreshCw size={12} color="#38BDF8" style={{ marginRight: 4 }} />
+                <RefreshCw size={12} color={theme.colors.accent} style={{ marginRight: 4 }} />
                 <Text style={styles.resumeText}>Reprendre</Text>
               </View>
             )}
@@ -73,12 +74,12 @@ export default function HomeScreen() {
             style={styles.mainContinueBtn}
           >
             <LinearGradient
-              colors={['#0284C7', '#0369A1']}
+              colors={[theme.colors.accentDark, theme.colors.accentDarker]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.mainContinueGradient}
             >
-              <Play size={24} color="#FFF" fill="#FFF" style={{ marginRight: 8 }} />
+              <Play size={24} color={theme.colors.white} fill={theme.colors.white} style={{ marginRight: 8 }} />
               <Text style={styles.mainContinueText}>
                 {hasActiveSave ? `Reprendre — Niveau ${currentLevel.id}` : `Continuer — Niveau ${currentLevel.id}`}
               </Text>
@@ -90,7 +91,7 @@ export default function HomeScreen() {
         <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <View style={styles.progressTitleRow}>
-              <Award size={20} color="#F59E0B" style={{ marginRight: 6 }} />
+              <Award size={20} color={theme.colors.warning} style={{ marginRight: 6 }} />
               <Text style={styles.progressTitle}>Progression Globale</Text>
             </View>
             <Text style={styles.progressPercentageText}>{overallPercentage}%</Text>
@@ -117,7 +118,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/levels')}
             style={styles.menuCard}
           >
-            <Grid size={28} color="#38BDF8" />
+            <Grid size={28} color={theme.colors.accent} />
             <Text style={styles.menuCardTitle}>Tous les Niveaux</Text>
             <Text style={styles.menuCardSub}>Parcourir la liste</Text>
           </TouchableOpacity>
@@ -127,7 +128,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/settings')}
             style={styles.menuCard}
           >
-            <Settings size={28} color="#94A3B8" />
+            <Settings size={28} color={theme.colors.textMuted} />
             <Text style={styles.menuCardTitle}>Paramètres</Text>
             <Text style={styles.menuCardSub}>Options & Sons</Text>
           </TouchableOpacity>
@@ -140,11 +141,11 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -164,20 +165,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 12,
-    shadowColor: '#38BDF8',
+    shadowColor: theme.colors.accent,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
     elevation: 8,
   },
   appTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: 2,
   },
   appSubtitle: {
-    color: '#38BDF8',
+    color: theme.colors.accent,
     fontSize: 14,
     fontWeight: '600',
     marginTop: 2,
@@ -185,13 +186,13 @@ const styles = StyleSheet.create({
   },
   currentLevelCard: {
     width: '100%',
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     borderRadius: 24,
     padding: 20,
     marginBottom: 16,
     borderWidth: 1.5,
-    borderColor: '#38BDF8',
-    shadowColor: '#38BDF8',
+    borderColor: theme.colors.accent,
+    shadowColor: theme.colors.accent,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -206,50 +207,50 @@ const styles = StyleSheet.create({
   levelBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    backgroundColor: theme.colors.warningSoft,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
   levelBadgeText: {
-    color: '#F59E0B',
+    color: theme.colors.warning,
     fontSize: 11,
     fontWeight: '800',
   },
   resumeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+    backgroundColor: theme.colors.accentSoft,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   resumeText: {
-    color: '#38BDF8',
+    color: theme.colors.accent,
     fontSize: 11,
     fontWeight: '700',
   },
   currentLevelNum: {
-    color: '#38BDF8',
+    color: theme.colors.accent,
     fontSize: 14,
     fontWeight: '800',
     marginTop: 4,
   },
   currentLevelName: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 22,
     fontWeight: '800',
     marginVertical: 4,
   },
   currentLevelMeta: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontSize: 13,
     marginBottom: 18,
   },
   mainContinueBtn: {
     borderRadius: 18,
     overflow: 'hidden',
-    shadowColor: '#0284C7',
+    shadowColor: theme.colors.accentDark,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
@@ -263,19 +264,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   mainContinueText: {
-    color: '#FFFFFF',
+    color: theme.colors.white,
     fontSize: 17,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   progressCard: {
     width: '100%',
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     borderRadius: 20,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: theme.colors.border,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -288,25 +289,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   progressTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 15,
     fontWeight: '700',
   },
   progressPercentageText: {
-    color: '#F59E0B',
+    color: theme.colors.warning,
     fontSize: 18,
     fontWeight: '900',
   },
   progressBarTrack: {
     height: 10,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     borderRadius: 5,
     overflow: 'hidden',
     marginBottom: 10,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#F59E0B',
+    backgroundColor: theme.colors.warning,
     borderRadius: 5,
   },
   progressStatsRow: {
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   progressSubtext: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontSize: 12,
   },
   menuGrid: {
@@ -324,21 +325,21 @@ const styles = StyleSheet.create({
   },
   menuCard: {
     flex: 1,
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     borderRadius: 20,
     padding: 16,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: theme.colors.border,
   },
   menuCardTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 14,
     fontWeight: '700',
     marginTop: 8,
   },
   menuCardSub: {
-    color: '#64748B',
+    color: theme.colors.textDim,
     fontSize: 11,
     marginTop: 2,
   },

@@ -3,6 +3,7 @@ import { View, StyleSheet, useWindowDimensions } from "react-native";
 import { GemSlot } from "./GemSlot";
 import { GemColor } from "../types/level";
 import { CellPosition } from "../types/game";
+import { theme } from '../constants/theme';
 
 interface GemGridProps {
   rows: number;
@@ -53,7 +54,7 @@ export const GemGrid: React.FC<GemGridProps> = ({
             {rowArray.map((targetColorId, columnIndex) => {
               const targetColor = paletteMap[targetColorId] ?? {
                 id: targetColorId,
-                hex: "#64748B",
+                hex: theme.colors.unknownGem,
                 name: "Inconnu",
               };
 
@@ -102,9 +103,9 @@ const styles = StyleSheet.create({
   gridContainer: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: "rgba(15, 23, 42, 0.4)",
+    backgroundColor: theme.colors.gridBackdrop,
     borderWidth: 1,
-    borderColor: "rgba(148, 163, 184, 0.15)",
+    borderColor: theme.colors.gridBorder,
   },
 
   row: {

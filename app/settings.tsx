@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Volume2, Vibrate, Trash2, HelpCircle, Info } from 'lucide-react-native';
 import { useProgress } from '../src/hooks/useProgress';
+import { theme } from '../src/constants/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function SettingsScreen() {
       {/* Top Header */}
       <View style={styles.header}>
         <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={22} color="#F8FAFC" />
+          <ArrowLeft size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Paramètres</Text>
         <View style={{ width: 40 }} />
@@ -45,14 +46,14 @@ export default function SettingsScreen() {
 
           <View style={styles.rowItem}>
             <View style={styles.rowLabelGroup}>
-              <Volume2 size={20} color="#38BDF8" style={{ marginRight: 10 }} />
+              <Volume2 size={20} color={theme.colors.accent} style={{ marginRight: 10 }} />
               <Text style={styles.rowLabelText}>Effets Sonores</Text>
             </View>
             <Switch
               value={progress?.soundEnabled ?? true}
               onValueChange={toggleSound}
-              trackColor={{ false: '#334155', true: '#0284C7' }}
-              thumbColor={progress?.soundEnabled ? '#38BDF8' : '#94A3B8'}
+              trackColor={{ false: theme.colors.border, true: theme.colors.accentDark }}
+              thumbColor={progress?.soundEnabled ? theme.colors.accent : theme.colors.textMuted}
             />
           </View>
 
@@ -60,14 +61,14 @@ export default function SettingsScreen() {
 
           <View style={styles.rowItem}>
             <View style={styles.rowLabelGroup}>
-              <Vibrate size={20} color="#38BDF8" style={{ marginRight: 10 }} />
+              <Vibrate size={20} color={theme.colors.accent} style={{ marginRight: 10 }} />
               <Text style={styles.rowLabelText}>Vibrations Haptiques</Text>
             </View>
             <Switch
               value={progress?.hapticsEnabled ?? true}
               onValueChange={toggleHaptics}
-              trackColor={{ false: '#334155', true: '#0284C7' }}
-              thumbColor={progress?.hapticsEnabled ? '#38BDF8' : '#94A3B8'}
+              trackColor={{ false: theme.colors.border, true: theme.colors.accentDark }}
+              thumbColor={progress?.hapticsEnabled ? theme.colors.accent : theme.colors.textMuted}
             />
           </View>
         </View>
@@ -76,16 +77,16 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>RÈGLES DU JEU</Text>
           <View style={styles.guideBox}>
-            <HelpCircle size={20} color="#F59E0B" style={{ marginBottom: 6 }} />
+            <HelpCircle size={20} color={theme.colors.warning} style={{ marginBottom: 6 }} />
             <Text style={styles.guideTitle}>Comment jouer à Gem Fill ?</Text>
             <Text style={styles.guideText}>
-              {'\u2022'} Chaque case affiche en fond la couleur cible : c'est là que la gemme correspondante doit se trouver.{'\n\n'}
+              {'\u2022'} Chaque case affiche en fond la couleur cible : c{"'"}est là que la gemme correspondante doit se trouver.{'\n\n'}
               {'\u2022'} Touchez une gemme mal placée pour sélectionner tout son groupe (gemmes de même couleur connectées). Les gemmes déjà bien placées sont verrouillées.{'\n\n'}
               {'\u2022'} Avec un groupe sélectionné, touchez une case vide dont la couleur cible correspond pour y placer les gemmes.{'\n\n'}
               {'\u2022'} Le plateau est souvent plein : utilisez la Zone de Réserve (12 emplacements en bas) pour libérer des cases. Touchez un emplacement vide de la réserve pour y envoyer le groupe sélectionné.{'\n\n'}
               {'\u2022'} Depuis la réserve, touchez une couleur de gemme puis une case vide compatible pour la replacer sur le plateau.{'\n\n'}
               {'\u2022'} Appui long sur une gemme : envoi direct vers la réserve.{'\n\n'}
-              {'\u2022'} Objectif : toutes les gemmes sur les bonnes cases pour révéler l'image en pixel art !
+              {'\u2022'} Objectif : toutes les gemmes sur les bonnes cases pour révéler l{"'"}image en pixel art !
             </Text>
           </View>
         </View>
@@ -95,14 +96,14 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>DONNÉES</Text>
 
           <TouchableOpacity activeOpacity={0.8} onPress={handleResetProgress} style={styles.resetBtn}>
-            <Trash2 size={20} color="#EF4444" style={{ marginRight: 8 }} />
+            <Trash2 size={20} color={theme.colors.error} style={{ marginRight: 8 }} />
             <Text style={styles.resetBtnText}>Réinitialiser toute la progression</Text>
           </TouchableOpacity>
         </View>
 
         {/* App Info Footer */}
         <View style={styles.infoFooter}>
-          <Info size={16} color="#64748B" style={{ marginRight: 4 }} />
+          <Info size={16} color={theme.colors.textDim} style={{ marginRight: 4 }} />
           <Text style={styles.infoText}>Gem Fill v1.0.0 — React Native & Expo</Text>
         </View>
       </ScrollView>
@@ -113,7 +114,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -122,18 +123,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: theme.colors.surface,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
   headerTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -141,15 +142,15 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   section: {
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     borderRadius: 20,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: theme.colors.border,
   },
   sectionTitle: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 1,
@@ -166,28 +167,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rowLabelText: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 15,
     fontWeight: '600',
   },
   divider: {
     height: 1,
-    backgroundColor: '#334155',
+    backgroundColor: theme.colors.border,
     marginVertical: 10,
   },
   guideBox: {
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     borderRadius: 14,
     padding: 14,
   },
   guideTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 15,
     fontWeight: '700',
     marginBottom: 6,
   },
   guideText: {
-    color: '#CBD5E1',
+    color: theme.colors.guideText,
     fontSize: 13,
     lineHeight: 20,
   },
@@ -195,14 +196,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#450A0A',
-    borderColor: '#991B1B',
+    backgroundColor: theme.colors.errorSurface,
+    borderColor: theme.colors.errorBorder,
     borderWidth: 1,
     paddingVertical: 14,
     borderRadius: 14,
   },
   resetBtnText: {
-    color: '#EF4444',
+    color: theme.colors.error,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -214,7 +215,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   infoText: {
-    color: '#64748B',
+    color: theme.colors.textDim,
     fontSize: 12,
   },
 });

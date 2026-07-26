@@ -9,6 +9,7 @@ import React, {
 import { UserProgressData } from "../types/game";
 import {
   getUserProgress,
+  invalidateProgressCache,
   markLevelCompleted,
   resetAllProgress,
   saveUserProgress,
@@ -49,6 +50,7 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
     }
 
+    invalidateProgressCache();
     const data = await getUserProgress();
     syncFeedbackSettings({
       hapticsEnabled: data.hapticsEnabled,

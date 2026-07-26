@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } fr
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Lightbulb } from 'lucide-react-native';
-import { getLevelById, ALL_LEVELS } from '../../src/data/levels';
-import { GemColor } from '../../src/types/level';
+import { getLevelById, resolveLevelFromRouteParam } from '../../src/data/levels';
+import { Level, GemColor } from '../../src/types/level';
 import { useGame } from '../../src/hooks/useGame';
 import { useLevel1Tutorial } from '../../src/hooks/useLevel1Tutorial';
 import { useProgress } from '../../src/hooks/useProgress';
@@ -14,13 +14,41 @@ import { ZoomableBoard } from '../../src/components/ZoomableBoard';
 import { ReserveZone } from '../../src/components/ReserveZone';
 import { VictoryModal } from '../../src/components/VictoryModal';
 import { Level1TutorialBanner } from '../../src/components/Level1TutorialBanner';
+import { theme } from '../../src/constants/theme';
 
-export default function GameScreen() {
+function InvalidLevelScreen({ requestedId }: { requestedId?: string }) {
   const router = useRouter();
-  const { levelId } = useLocalSearchParams<{ levelId: string }>();
-  const parsedLevelId = parseInt(levelId || '1', 10);
 
-  const level = getLevelById(parsedLevelId) || ALL_LEVELS[0];
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>Niveau introuvable</Text>
+        <Text style={styles.errorText}>
+          {requestedId
+            ? `Le niveau "${requestedId}" n'existe pas ou n'est pas disponible.`
+            : "Ce niveau n'existe pas ou n'est pas disponible."}
+        </Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.replace('/levels')}
+          style={styles.errorPrimaryBtn}
+        >
+          <Text style={styles.errorPrimaryBtnText}>Voir les niveaux</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={() => router.replace('/')}
+          style={styles.errorSecondaryBtn}
+        >
+          <Text style={styles.errorSecondaryBtnText}>Retour à l{"'"}accueil</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+function GameScreenContent({ level }: { level: Level }) {
+  const router = useRouter();
   const { recordVictory } = useProgress();
 
   const [victoryModalVisible, setVictoryModalVisible] = useState(false);
@@ -52,9 +80,7 @@ export default function GameScreen() {
     selectedReserveColorId,
     moves,
     elapsedTime,
-    isVictory,
     percentage,
-    stars,
     isInitialized,
     handleCellTap,
     handleReserveTap,
@@ -108,7 +134,7 @@ export default function GameScreen() {
   if (!isInitialized || grid.length === 0) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#38BDF8" />
+        <ActivityIndicator size="large" color={theme.colors.accent} />
         <Text style={styles.loadingText}>Chargement du niveau...</Text>
       </View>
     );
@@ -134,7 +160,7 @@ export default function GameScreen() {
         <View style={styles.percentageRow}>
           <Text style={styles.percentageText}>{percentage}% Placé</Text>
           <TouchableOpacity activeOpacity={0.7} onPress={handleHint} style={styles.hintBtn}>
-            <Lightbulb size={16} color="#F59E0B" style={{ marginRight: 4 }} />
+            <Lightbulb size={16} color={theme.colors.warning} style={{ marginRight: 4 }} />
             <Text style={styles.hintBtnText}>Indice</Text>
           </TouchableOpacity>
         </View>
@@ -200,37 +226,94 @@ export default function GameScreen() {
   );
 }
 
+export default function GameScreen() {
+  const { levelId } = useLocalSearchParams<{ levelId: string }>();
+  const level = resolveLevelFromRouteParam(levelId);
+
+  if (!level) {
+    return <InvalidLevelScreen requestedId={levelId} />;
+  }
+
+  return <GameScreenContent level={level} />;
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   loadingText: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     marginTop: 12,
     fontSize: 14,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  errorTitle: {
+    color: theme.colors.text,
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  errorText: {
+    color: theme.colors.textMuted,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginBottom: 28,
+  },
+  errorPrimaryBtn: {
+    backgroundColor: theme.colors.accentDark,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+    minWidth: 220,
+    alignItems: 'center',
+  },
+  errorPrimaryBtnText: {
+    color: theme.colors.text,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  errorSecondaryBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    minWidth: 220,
+    alignItems: 'center',
+  },
+  errorSecondaryBtnText: {
+    color: theme.colors.textMuted,
+    fontSize: 15,
+    fontWeight: '600',
   },
   subHeader: {
     paddingHorizontal: 16,
     paddingVertical: 6,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
   },
   percentageBarContainer: {
     height: 6,
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 4,
   },
   percentageBarFill: {
     height: '100%',
-    backgroundColor: '#10B981',
+    backgroundColor: theme.colors.success,
     borderRadius: 3,
   },
   percentageRow: {
@@ -239,20 +322,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   percentageText: {
-    color: '#10B981',
+    color: theme.colors.success,
     fontSize: 12,
     fontWeight: '700',
   },
   hintBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    backgroundColor: theme.colors.warningSoft,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 10,
   },
   hintBtnText: {
-    color: '#F59E0B',
+    color: theme.colors.warning,
     fontSize: 12,
     fontWeight: '700',
   },

@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Level } from "../types/level";
 import { CellPosition } from "../types/game";
 import { shuffleTargetGrid } from "../utils/shuffleGrid";
-import { checkGridState, calculateStars } from "../utils/validateGrid";
+import { checkGridState } from "../utils/validateGrid";
 import {
-  saveActiveGameState,
   clearActiveGameState,
   getUserProgress,
 } from "../services/progressStorage";
+import { isValidSavedGame } from "../utils/savedGameValidation";
 import {
   getConnectedGemGroup,
   moveGroupToReserve,
@@ -21,8 +21,12 @@ import {
   feedbackSelection,
   feedbackSuccess,
 } from "../utils/feedback";
+import { useGameTimer } from "./useGameTimer";
+import { useGamePersistence } from "./useGamePersistence";
 
-export const RESERVE_CAPACITY = 12;
+import { RESERVE_CAPACITY } from "../constants/game";
+
+export { RESERVE_CAPACITY };
 
 const createEmptyReserve = (): (string | null)[] =>
   Array(RESERVE_CAPACITY).fill(null);
@@ -77,13 +81,16 @@ export function useGame(
   >(null);
 
   const [moves, setMoves] = useState(0);
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [isVictory, setIsVictory] = useState(false);
   const [percentage, setPercentage] = useState(0);
   const [stars, setStars] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { elapsedTime, setElapsedTime, elapsedTimeRef } = useGameTimer(
+    isInitialized,
+    isVictory,
+  );
+
   const gridRef = useRef<(string | null)[][]>([]);
   const reserveRef = useRef<(string | null)[]>(createEmptyReserve());
   const selectedPositionsRef = useRef<CellPosition[]>([]);
@@ -167,11 +174,7 @@ export function useGame(
     const userProgress = await getUserProgress();
     const saved = userProgress.activeSavedGame;
 
-    if (
-      saved &&
-      saved.levelId === level.id &&
-      saved.currentGrid.length === level.rows
-    ) {
+    if (saved && isValidSavedGame(saved, level)) {
       setGrid(saved.currentGrid);
 
       /*
@@ -196,7 +199,7 @@ export function useGame(
         setIsVictory(true);
       }
     } else {
-      const shuffled = shuffleTargetGrid(level.targetGrid);
+      const shuffled = shuffleTargetGrid(level.targetGrid, level.id);
 
       setGrid(shuffled);
       setReserve(createEmptyReserve());
@@ -215,62 +218,15 @@ export function useGame(
     initGame();
   }, [initGame]);
 
-  useEffect(() => {
-    if (!isInitialized || isVictory) {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-
-      return;
-    }
-
-    timerRef.current = setInterval(() => {
-      setElapsedTime((previousTime) => previousTime + 1);
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [isInitialized, isVictory]);
-
-  const verifyStateAndSave = useCallback(
-    (
-      newGrid: (string | null)[][],
-      newReserve: (string | null)[],
-      newMoves: number,
-    ) => {
-      const check = checkGridState(newGrid, level.targetGrid);
-
-      setPercentage(check.percentage);
-
-      if (check.isComplete) {
-        setIsVictory(true);
-        triggerSuccessHaptic();
-
-        const earnedStars = calculateStars(
-          newMoves,
-          level.rows * level.columns,
-        );
-
-        setStars(earnedStars);
-        clearActiveGameState();
-
-        onVictoryCallback?.(newMoves, elapsedTime, earnedStars);
-      } else {
-        saveActiveGameState({
-          levelId: level.id,
-          currentGrid: newGrid,
-          reserveGems: newReserve,
-          moves: newMoves,
-          elapsedTimeSeconds: elapsedTime,
-          updatedAt: Date.now(),
-        });
-      }
-    },
-    [level, elapsedTime, onVictoryCallback, triggerSuccessHaptic],
-  );
+  const { verifyStateAndSave } = useGamePersistence({
+    level,
+    elapsedTimeRef,
+    onVictoryCallback,
+    setPercentage,
+    setIsVictory,
+    setStars,
+    onVictoryHaptic: triggerSuccessHaptic,
+  });
 
   const handleCellTap = useCallback(
     (row: number, col: number) => {
@@ -436,7 +392,6 @@ export function useGame(
       triggerPlacementFeedback,
       trySelectBoardGemGroup,
       verifyStateAndSave,
-      triggerHaptic,
     ],
   );
 
@@ -626,7 +581,7 @@ export function useGame(
   const restartLevel = useCallback(() => {
     clearActiveGameState();
 
-    const shuffled = shuffleTargetGrid(level.targetGrid);
+    const shuffled = shuffleTargetGrid(level.targetGrid, level.id);
 
     const emptyReserve = createEmptyReserve();
 

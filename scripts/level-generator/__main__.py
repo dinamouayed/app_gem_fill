@@ -1,6 +1,6 @@
-"""Entry point for `python -m generate_level`."""
+"""Entry point for `python -m cli` from scripts/level-generator."""
 
-from generate_level import main
+from cli import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

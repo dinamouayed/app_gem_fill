@@ -6,7 +6,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { LoadingScreen } from '../src/components/LoadingScreen';
+import { ErrorBoundary } from '../src/components/ErrorBoundary';
 import { ProgressProvider, useProgress } from '../src/context/ProgressContext';
+import { theme } from '../src/constants/theme';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -31,7 +33,7 @@ function AppNavigation() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: '#0F172A' },
+          contentStyle: { backgroundColor: theme.colors.background },
           animation: 'slide_from_right',
         }}
       >
@@ -47,9 +49,11 @@ function AppNavigation() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.container}>
-      <ProgressProvider>
-        <AppNavigation />
-      </ProgressProvider>
+      <ErrorBoundary>
+        <ProgressProvider>
+          <AppNavigation />
+        </ProgressProvider>
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }
@@ -57,6 +61,6 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
   },
 });

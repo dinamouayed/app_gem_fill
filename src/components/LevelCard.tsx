@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Lock, Star, Play, CheckCircle2 } from 'lucide-react-native';
 import { Level } from '../types/level';
 import { LevelProgress } from '../types/game';
+import { theme } from '../constants/theme';
 
 interface LevelCardProps {
   level: Level;
@@ -36,8 +37,8 @@ export const LevelCard: React.FC<LevelCardProps> = ({
         <Text style={[styles.levelNum, isLocked && styles.textLocked]}>
           Niveau {level.id}
         </Text>
-        {isLocked && <Lock size={16} color="#64748B" />}
-        {isCompleted && <CheckCircle2 size={18} color="#10B981" />}
+        {isLocked && <Lock size={16} color={theme.colors.textDim} />}
+        {isCompleted && <CheckCircle2 size={18} color={theme.colors.success} />}
         {isInProgress && (
           <View style={styles.inProgressBadge}>
             <Text style={styles.inProgressText}>En cours</Text>
@@ -61,15 +62,15 @@ export const LevelCard: React.FC<LevelCardProps> = ({
               <Star
                 key={starIndex}
                 size={14}
-                color={starIndex <= (progress.stars || 1) ? '#F59E0B' : '#475569'}
-                fill={starIndex <= (progress.stars || 1) ? '#F59E0B' : 'transparent'}
+                color={starIndex <= (progress.stars || 1) ? theme.colors.warning : theme.colors.textFaint}
+                fill={starIndex <= (progress.stars || 1) ? theme.colors.warning : 'transparent'}
                 style={{ marginRight: 2 }}
               />
             ))}
           </View>
         ) : !isLocked ? (
           <View style={styles.playRow}>
-            <Play size={14} color="#38BDF8" fill="#38BDF8" style={{ marginRight: 4 }} />
+            <Play size={14} color={theme.colors.accent} fill={theme.colors.accent} style={{ marginRight: 4 }} />
             <Text style={styles.playText}>Jouer</Text>
           </View>
         ) : (
@@ -82,14 +83,14 @@ export const LevelCard: React.FC<LevelCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     borderRadius: 16,
     padding: 14,
     marginVertical: 6,
     marginHorizontal: 8,
     borderWidth: 1.5,
-    borderColor: '#334155',
-    shadowColor: '#000',
+    borderColor: theme.colors.border,
+    shadowColor: theme.colors.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 5,
@@ -97,17 +98,17 @@ const styles = StyleSheet.create({
     width: '45%',
   },
   cardLocked: {
-    backgroundColor: '#0F172A',
-    borderColor: '#1E293B',
+    backgroundColor: theme.colors.background,
+    borderColor: theme.colors.surface,
     opacity: 0.6,
   },
   cardCompleted: {
-    borderColor: '#059669',
-    backgroundColor: '#064E3B22',
+    borderColor: theme.colors.successDark,
+    backgroundColor: theme.colors.successSurface,
   },
   cardInProgress: {
-    borderColor: '#0284C7',
-    backgroundColor: '#07598522',
+    borderColor: theme.colors.accentDark,
+    backgroundColor: theme.colors.inProgressSurface,
   },
   topRow: {
     flexDirection: 'row',
@@ -116,21 +117,21 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   levelNum: {
-    color: '#38BDF8',
+    color: theme.colors.accent,
     fontSize: 12,
     fontWeight: '800',
   },
   title: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 15,
     fontWeight: '700',
     marginVertical: 2,
   },
   textLocked: {
-    color: '#64748B',
+    color: theme.colors.textDim,
   },
   gridDimensions: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontSize: 11,
     marginTop: 2,
   },
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: theme.colors.divider,
   },
   starsRow: {
     flexDirection: 'row',
@@ -149,23 +150,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   playText: {
-    color: '#38BDF8',
+    color: theme.colors.accent,
     fontSize: 12,
     fontWeight: '700',
   },
   lockedHint: {
-    color: '#64748B',
+    color: theme.colors.textDim,
     fontSize: 11,
     fontStyle: 'italic',
   },
   inProgressBadge: {
-    backgroundColor: '#0284C7',
+    backgroundColor: theme.colors.accentDark,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 8,
   },
   inProgressText: {
-    color: '#FFF',
+    color: theme.colors.white,
     fontSize: 9,
     fontWeight: '700',
   },

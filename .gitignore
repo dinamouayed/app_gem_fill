@@ -40,6 +40,9 @@ yarn-error.*
 /ios
 /android
 
+# test coverage
+coverage/
+
 # Python level generator
 scripts/level-generator/.venv/
 scripts/level-generator/__pycache__/

@@ -3,6 +3,7 @@ import { UserProgressData, LevelProgress, SavedGameState } from '../types/game';
 import { ALL_LEVELS, syncUnlockedLevel } from '../data/levels';
 
 const STORAGE_KEY = '@gem_fill_user_progress_v1';
+const SAVE_DEBOUNCE_MS = 400;
 
 const DEFAULT_PROGRESS: UserProgressData = {
   currentUnlockedLevel: 1,
@@ -12,10 +13,55 @@ const DEFAULT_PROGRESS: UserProgressData = {
   hapticsEnabled: true,
 };
 
-export async function getUserProgress(): Promise<UserProgressData> {
+let cachedProgress: UserProgressData | null = null;
+let pendingSaveTimer: ReturnType<typeof setTimeout> | null = null;
+let persistChain: Promise<void> = Promise.resolve();
+
+async function writeToStorage(progress: UserProgressData): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  } catch (error) {
+    console.error('Error saving user progress to AsyncStorage:', error);
+  }
+}
+
+function schedulePersist(
+  progress: UserProgressData,
+  immediate = false,
+): Promise<void> {
+  cachedProgress = progress;
+
+  if (immediate) {
+    if (pendingSaveTimer) {
+      clearTimeout(pendingSaveTimer);
+      pendingSaveTimer = null;
+    }
+    persistChain = persistChain.then(() => writeToStorage(progress));
+    return persistChain;
+  }
+
+  if (pendingSaveTimer) {
+    clearTimeout(pendingSaveTimer);
+  }
+
+  return new Promise((resolve) => {
+    pendingSaveTimer = setTimeout(() => {
+      pendingSaveTimer = null;
+      persistChain = persistChain
+        .then(() => writeToStorage(progress))
+        .then(resolve);
+    }, SAVE_DEBOUNCE_MS);
+  });
+}
+
+async function loadProgressFromStorage(): Promise<UserProgressData> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY);
-    if (!raw) return DEFAULT_PROGRESS;
+    if (!raw) {
+      cachedProgress = DEFAULT_PROGRESS;
+      return DEFAULT_PROGRESS;
+    }
+
     const parsed = JSON.parse(raw) as Partial<UserProgressData>;
     const progress: UserProgressData = {
       ...DEFAULT_PROGRESS,
@@ -27,43 +73,75 @@ export async function getUserProgress(): Promise<UserProgressData> {
       progress.completedLevels,
     );
 
-    if (syncedUnlockedLevel === progress.currentUnlockedLevel) {
-      return progress;
+    const syncedProgress: UserProgressData =
+      syncedUnlockedLevel === progress.currentUnlockedLevel
+        ? progress
+        : {
+            ...progress,
+            currentUnlockedLevel: syncedUnlockedLevel,
+          };
+
+    cachedProgress = syncedProgress;
+
+    if (syncedProgress !== progress) {
+      await schedulePersist(syncedProgress, true);
     }
 
-    const syncedProgress: UserProgressData = {
-      ...progress,
-      currentUnlockedLevel: syncedUnlockedLevel,
-    };
-
-    await saveUserProgress(syncedProgress);
     return syncedProgress;
   } catch (error) {
     console.error('Error reading user progress from AsyncStorage:', error);
+    cachedProgress = DEFAULT_PROGRESS;
     return DEFAULT_PROGRESS;
   }
 }
 
-export async function saveUserProgress(progress: UserProgressData): Promise<void> {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-  } catch (error) {
-    console.error('Error saving user progress to AsyncStorage:', error);
+async function getCachedOrLoadProgress(): Promise<UserProgressData> {
+  if (cachedProgress) {
+    return cachedProgress;
   }
+
+  return loadProgressFromStorage();
+}
+
+export async function flushPendingProgressSave(): Promise<void> {
+  if (pendingSaveTimer && cachedProgress) {
+    clearTimeout(pendingSaveTimer);
+    pendingSaveTimer = null;
+    persistChain = persistChain.then(() => writeToStorage(cachedProgress!));
+  }
+
+  await persistChain;
+}
+
+export function invalidateProgressCache(): void {
+  cachedProgress = null;
+}
+
+export async function getUserProgress(): Promise<UserProgressData> {
+  return getCachedOrLoadProgress();
+}
+
+export async function saveUserProgress(progress: UserProgressData): Promise<void> {
+  await schedulePersist(progress, true);
 }
 
 export async function markLevelCompleted(
   levelId: number,
   moves: number,
   timeSeconds: number,
-  stars: number
+  stars: number,
 ): Promise<UserProgressData> {
-  const current = await getUserProgress();
+  const current = await getCachedOrLoadProgress();
 
   const prevBest = current.completedLevels[levelId];
-  const newBestMoves = prevBest?.bestMoves != null ? Math.min(prevBest.bestMoves, moves) : moves;
-  const newBestTime = prevBest?.bestTimeSeconds != null ? Math.min(prevBest.bestTimeSeconds, timeSeconds) : timeSeconds;
-  const newBestStars = prevBest?.stars != null ? Math.max(prevBest.stars, stars) : stars;
+  const newBestMoves =
+    prevBest?.bestMoves != null ? Math.min(prevBest.bestMoves, moves) : moves;
+  const newBestTime =
+    prevBest?.bestTimeSeconds != null
+      ? Math.min(prevBest.bestTimeSeconds, timeSeconds)
+      : timeSeconds;
+  const newBestStars =
+    prevBest?.stars != null ? Math.max(prevBest.stars, stars) : stars;
 
   const updatedCompleted: Record<number, LevelProgress> = {
     ...current.completedLevels,
@@ -83,7 +161,6 @@ export async function markLevelCompleted(
     ? Math.max(current.currentUnlockedLevel, nextLevel.id)
     : Math.max(current.currentUnlockedLevel, levelId + 1);
 
-  // Clear saved game for this level if completed
   let updatedSavedGame = current.activeSavedGame;
   if (updatedSavedGame?.levelId === levelId) {
     updatedSavedGame = null;
@@ -96,29 +173,46 @@ export async function markLevelCompleted(
     activeSavedGame: updatedSavedGame,
   };
 
-  await saveUserProgress(updatedProgress);
+  await schedulePersist(updatedProgress, true);
   return updatedProgress;
 }
 
-export async function saveActiveGameState(savedGame: SavedGameState): Promise<void> {
-  const current = await getUserProgress();
-  const updatedProgress: UserProgressData = {
+export async function saveActiveGameState(
+  savedGame: SavedGameState,
+): Promise<void> {
+  const current = await getCachedOrLoadProgress();
+  await schedulePersist({
     ...current,
     activeSavedGame: savedGame,
-  };
-  await saveUserProgress(updatedProgress);
+  });
 }
 
 export async function clearActiveGameState(): Promise<void> {
-  const current = await getUserProgress();
-  const updatedProgress: UserProgressData = {
-    ...current,
-    activeSavedGame: null,
-  };
-  await saveUserProgress(updatedProgress);
+  const current = await getCachedOrLoadProgress();
+  await schedulePersist(
+    {
+      ...current,
+      activeSavedGame: null,
+    },
+    true,
+  );
 }
 
 export async function resetAllProgress(): Promise<UserProgressData> {
-  await AsyncStorage.removeItem(STORAGE_KEY);
+  if (pendingSaveTimer) {
+    clearTimeout(pendingSaveTimer);
+    pendingSaveTimer = null;
+  }
+
+  await persistChain;
+  cachedProgress = null;
+
+  try {
+    await AsyncStorage.removeItem(STORAGE_KEY);
+  } catch (error) {
+    console.error('Error resetting user progress:', error);
+  }
+
+  cachedProgress = DEFAULT_PROGRESS;
   return DEFAULT_PROGRESS;
 }

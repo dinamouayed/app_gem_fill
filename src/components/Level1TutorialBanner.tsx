@@ -1,5 +1,6 @@
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { theme } from '../constants/theme';
 
 interface Level1TutorialBannerProps {
   message: string;
@@ -39,16 +40,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderWidth: 1.5,
-    borderColor: "rgba(56, 189, 248, 0.45)",
+    borderColor: theme.colors.accentSoftBorder,
     maxWidth: 320,
-    shadowColor: "#38BDF8",
+    shadowColor: theme.colors.accent,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
     elevation: 8,
   },
   stepLabel: {
-    color: "#38BDF8",
+    color: theme.colors.accent,
     fontSize: 11,
     fontWeight: "700",
     letterSpacing: 0.5,
@@ -56,7 +57,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   message: {
-    color: "#F8FAFC",
+    color: theme.colors.text,
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",

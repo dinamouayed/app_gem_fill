@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ArrowLeft, RotateCcw, Clock, Footprints } from 'lucide-react-native';
+import { theme } from '../constants/theme';
 
 interface HeaderBarProps {
   levelId: number;
@@ -28,7 +29,7 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
   return (
     <View style={styles.container}>
       <TouchableOpacity activeOpacity={0.7} onPress={onBack} style={styles.iconBtn}>
-        <ArrowLeft size={22} color="#F8FAFC" />
+        <ArrowLeft size={22} color={theme.colors.text} />
       </TouchableOpacity>
 
       <View style={styles.centerInfo}>
@@ -40,18 +41,18 @@ export const HeaderBar: React.FC<HeaderBarProps> = ({
 
       <View style={styles.statsContainer}>
         <View style={styles.statPill}>
-          <Clock size={14} color="#38BDF8" style={{ marginRight: 4 }} />
+          <Clock size={14} color={theme.colors.accent} style={{ marginRight: 4 }} />
           <Text style={styles.statText}>{formatTime(elapsedTimeSeconds)}</Text>
         </View>
 
         <View style={styles.statPill}>
-          <Footprints size={14} color="#F59E0B" style={{ marginRight: 4 }} />
+          <Footprints size={14} color={theme.colors.warning} style={{ marginRight: 4 }} />
           <Text style={styles.statText}>{moves}</Text>
         </View>
       </View>
 
       <TouchableOpacity activeOpacity={0.7} onPress={onRestart} style={styles.iconBtn}>
-        <RotateCcw size={20} color="#F8FAFC" />
+        <RotateCcw size={20} color={theme.colors.text} />
       </TouchableOpacity>
     </View>
   );
@@ -64,19 +65,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: theme.colors.surface,
   },
   iconBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: theme.colors.border,
   },
   centerInfo: {
     flex: 1,
@@ -84,13 +85,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   levelBadge: {
-    color: '#38BDF8',
+    color: theme.colors.accent,
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 1.2,
   },
   levelTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 16,
     fontWeight: '700',
     marginTop: 1,
@@ -104,15 +105,15 @@ const styles = StyleSheet.create({
   statPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: theme.colors.border,
   },
   statText: {
-    color: '#F1F5F9',
+    color: theme.colors.textSecondary,
     fontSize: 13,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],

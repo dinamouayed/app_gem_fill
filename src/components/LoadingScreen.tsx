@@ -14,8 +14,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Gem } from 'lucide-react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { MOTION } from '../constants/motion';
+import { theme } from '../constants/theme';
 
-const GEM_COLORS = ['#38BDF8', '#6366F1', '#F59E0B', '#10B981', '#EC4899', '#0284C7'];
+const GEM_COLORS = [...theme.mosaic];
 
 const MOSAIC_PATTERN = [
   [0, 1, 2, 3, 4, 5, 4, 3],
@@ -169,7 +170,7 @@ export function LoadingScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#0F172A', '#1E293B', '#0F172A']}
+        colors={[theme.colors.background, theme.colors.surface, theme.colors.background]}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -180,8 +181,8 @@ export function LoadingScreen() {
         <Animated.View style={[styles.logoGlow, glowAnimatedStyle]} />
 
         <Animated.View style={[styles.logoWrapper, logoAnimatedStyle]}>
-          <LinearGradient colors={['#38BDF8', '#0284C7', '#6366F1']} style={styles.logoBadge}>
-            <Gem size={52} color="#FFF" />
+          <LinearGradient colors={[theme.colors.accent, theme.colors.accentDark, theme.colors.indigo]} style={styles.logoBadge}>
+            <Gem size={52} color={theme.colors.white} />
           </LinearGradient>
         </Animated.View>
 
@@ -207,7 +208,7 @@ export function LoadingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -237,7 +238,7 @@ const styles = StyleSheet.create({
     width: 140,
     height: 140,
     borderRadius: 70,
-    backgroundColor: '#38BDF8',
+    backgroundColor: theme.colors.accent,
   },
   logoWrapper: {
     marginBottom: 20,
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#38BDF8',
+    shadowColor: theme.colors.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
@@ -259,13 +260,13 @@ const styles = StyleSheet.create({
     marginBottom: 36,
   },
   appTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 36,
     fontWeight: '900',
     letterSpacing: 3,
   },
   appSubtitle: {
-    color: '#38BDF8',
+    color: theme.colors.accent,
     fontSize: 14,
     fontWeight: '600',
     marginTop: 6,
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   loadingLabel: {
-    color: '#64748B',
+    color: theme.colors.textDim,
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.4,

@@ -1,0 +1,7 @@
+{
+  "description": "Exemple — liste ciblée de thèmes à générer. Copier et adapter.",
+  "themes": [
+    { "name": "Avocat", "pattern": "lemon" },
+    { "name": "Ours", "pattern": "fox" }
+  ]
+}

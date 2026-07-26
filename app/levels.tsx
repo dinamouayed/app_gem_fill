@@ -6,6 +6,7 @@ import { ArrowLeft, Layers } from 'lucide-react-native';
 import { useProgress } from '../src/hooks/useProgress';
 import { ALL_LEVELS, isLevelUnlocked } from '../src/data/levels';
 import { LevelCard } from '../src/components/LevelCard';
+import { theme } from '../src/constants/theme';
 
 export default function LevelsScreen() {
   const router = useRouter();
@@ -26,10 +27,10 @@ export default function LevelsScreen() {
       {/* Top Header */}
       <View style={styles.header}>
         <TouchableOpacity activeOpacity={0.7} onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={22} color="#F8FAFC" />
+          <ArrowLeft size={22} color={theme.colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleRow}>
-          <Layers size={20} color="#38BDF8" style={{ marginRight: 6 }} />
+          <Layers size={20} color={theme.colors.accent} style={{ marginRight: 6 }} />
           <Text style={styles.headerTitle}>Sélection des Niveaux</Text>
         </View>
         <View style={{ width: 40 }} />
@@ -74,11 +75,11 @@ export default function LevelsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -89,13 +90,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: theme.colors.surface,
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   subtitle: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontSize: 13,
     textAlign: 'center',
     marginBottom: 16,

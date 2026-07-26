@@ -14,7 +14,6 @@ import json
 import re
 import sys
 from collections import Counter, deque
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
@@ -28,6 +27,19 @@ from color_distance import (
     validate_palette_separation,
 )
 
+from level_generator.export import (
+    export_level_typescript,
+    next_level_id,
+    sync_levels_index,
+)
+from level_generator.models import (
+    DominantColorError,
+    LevelData,
+    MAX_DOMINANT_COLOR_RATIO,
+    MAX_START_CORRECT_PERCENT,
+    ShuffleDifficultyError,
+)
+
 MIN_COLORS = 2
 MAX_COLORS = 10
 DEFAULT_MAX_COLS = 14
@@ -36,58 +48,6 @@ MIN_GRID = 4
 MAX_GRID_CELLS = 196
 CROP_COLOR_TOLERANCE = 35
 UNIFORM_EDGE_THRESHOLD = 0.9
-MAX_DOMINANT_COLOR_RATIO = 0.5
-MAX_START_CORRECT_PERCENT = 20
-
-
-class DominantColorError(ValueError):
-    """Raised when one quantized color occupies too much of the grid."""
-
-    def __init__(
-        self,
-        ratio: float,
-        *,
-        max_ratio: float = MAX_DOMINANT_COLOR_RATIO,
-        color_index: int | None = None,
-    ) -> None:
-        self.ratio = ratio
-        self.max_ratio = max_ratio
-        self.color_index = color_index
-        pct = ratio * 100
-        limit = max_ratio * 100
-        detail = f" (index {color_index})" if color_index is not None else ""
-        super().__init__(
-            f"Couleur dominante{detail}: {pct:.1f}% de la grille (> {limit:.0f}% max)."
-        )
-
-
-class ShuffleDifficultyError(ValueError):
-    """Raised when the shuffled start state has too many gems already correct."""
-
-    def __init__(
-        self,
-        percent: float,
-        *,
-        max_percent: float = MAX_START_CORRECT_PERCENT,
-    ) -> None:
-        self.percent = percent
-        self.max_percent = max_percent
-        super().__init__(
-            f"Trop de gemmes déjà bien placées au départ: {percent:.1f}% "
-            f"(> {max_percent:.0f}% max)."
-        )
-
-
-@dataclass
-class LevelData:
-    id: int
-    name: str
-    rows: int
-    columns: int
-    difficulty: str
-    category: str
-    palette: list[dict]
-    target_grid: list[list[str]]
 
 
 def color_distance_sq(c1: np.ndarray, c2: np.ndarray) -> float:
@@ -690,79 +650,6 @@ def generate_level_from_image(
     )
 
 
-def export_level_typescript(level: LevelData, output_path: str | Path) -> Path:
-    output = Path(output_path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-
-    payload = {
-        "id": level.id,
-        "name": level.name,
-        "rows": level.rows,
-        "columns": level.columns,
-        "difficulty": level.difficulty,
-        "category": level.category,
-        "palette": level.palette,
-        "targetGrid": level.target_grid,
-    }
-
-    content = (
-        "import { Level } from '../../types/level';\n\n"
-        f"export const level{level.id}: Level = {json.dumps(payload, indent=2, ensure_ascii=False)};\n"
-    )
-    output.write_text(content, encoding="utf-8")
-    return output
-
-
-def next_level_id(levels_dir: str | Path) -> int:
-    levels_path = Path(levels_dir)
-    existing = []
-    for file in levels_path.glob("level*.ts"):
-        match = re.match(r"level(\d+)\.ts", file.name)
-        if match:
-            existing.append(int(match.group(1)))
-    return max(existing, default=0) + 1
-
-
-def register_level_in_index(level_id: int, index_path: str | Path, levels_dir: str | Path) -> bool:
-    """Register every level*.ts file in src/data/levels/index.ts."""
-    index_file = Path(index_path)
-    levels_path = Path(levels_dir)
-    if not index_file.exists():
-        return False
-
-    level_ids = sorted(
-        int(match.group(1))
-        for file in levels_path.glob("level*.ts")
-        if (match := re.match(r"level(\d+)\.ts", file.name))
-    )
-    if level_id not in level_ids:
-        level_ids.append(level_id)
-        level_ids.sort()
-
-    content = index_file.read_text(encoding="utf-8")
-    imports = "\n".join(f"import {{ level{id} }} from './level{id}';" for id in level_ids)
-    array_body = "\n".join(f"  level{id}," for id in level_ids)
-
-    content = re.sub(
-        r"import \{ level\d+ \} from '\./level\d+';\n(?:import \{ level\d+ \} from '\./level\d+';\n)*",
-        imports + "\n",
-        content,
-        count=1,
-    )
-    content = re.sub(
-        r"export const ALL_LEVELS: Level\[\] = \[([\s\S]*?)\];",
-        f"export const ALL_LEVELS: Level[] = [\n{array_body}\n];",
-        content,
-        count=1,
-    )
-
-    changed = content != index_file.read_text(encoding="utf-8")
-    if changed:
-        index_file.write_text(content, encoding="utf-8")
-
-    return changed
-
-
 def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Génère un niveau Gem Fill à partir d'une image."
@@ -876,9 +763,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         output_path = repo_root / output_path
 
     export_level_typescript(level, output_path)
-    index_path = repo_root / "src/data/levels/index.ts"
-    levels_dir = repo_root / "src/data/levels"
-    registered = register_level_in_index(level.id, index_path, levels_dir)
+    synced = sync_levels_index()
 
     print("----------------------------------------------------")
     print("💎 GEM FILL — Générateur de niveau")
@@ -891,10 +776,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     for color in level.palette:
         print(f"   - {color['id']}: {color['hex']} ({color.get('name', '')})")
     print(f" Sortie    : {output_path}")
-    if registered:
-        print(f" Index     : {index_path} (niveau enregistré)")
-    else:
-        print(f" Index     : déjà présent dans {index_path}")
+    print(f" Index     : {synced.relative_to(repo_root)}")
     print("----------------------------------------------------")
 
     if args.preview_shuffle:

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { Trophy, Star, ArrowRight, RotateCcw, Home, Sparkles } from 'lucide-react-native';
 import { Level, GemColor } from '../types/level';
+import { theme } from '../constants/theme';
 
 interface VictoryModalProps {
   visible: boolean;
@@ -54,11 +55,11 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
         <View style={[styles.modalCard, { width: Math.min(windowWidth - 40, 360) }]}>
           {/* Top Banner Icon */}
           <View style={styles.trophyContainer}>
-            <Sparkles size={24} color="#FBBF24" style={styles.sparkleLeft} />
+            <Sparkles size={24} color={theme.colors.warningLight} style={styles.sparkleLeft} />
             <View style={styles.trophyCircle}>
-              <Trophy size={40} color="#F59E0B" fill="#FBBF24" />
+              <Trophy size={40} color={theme.colors.warning} fill={theme.colors.warningLight} />
             </View>
-            <Sparkles size={24} color="#FBBF24" style={styles.sparkleRight} />
+            <Sparkles size={24} color={theme.colors.warningLight} style={styles.sparkleRight} />
           </View>
 
           <Text style={styles.congratsTitle}>Niveau Réussi !</Text>
@@ -70,8 +71,8 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
               <Star
                 key={starIdx}
                 size={32}
-                color={starIdx <= stars ? '#F59E0B' : '#334155'}
-                fill={starIdx <= stars ? '#FBBF24' : 'transparent'}
+                color={starIdx <= stars ? theme.colors.warning : theme.colors.border}
+                fill={starIdx <= stars ? theme.colors.warningLight : 'transparent'}
                 style={{ marginHorizontal: 4 }}
               />
             ))}
@@ -84,7 +85,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
               {level.targetGrid.map((row, r) => (
                 <View key={`pv-row-${r}`} style={{ flexDirection: 'row' }}>
                   {row.map((colorId, c) => {
-                    const color = paletteMap[colorId]?.hex || '#000';
+                    const color = paletteMap[colorId]?.hex || theme.colors.black;
                     return (
                       <View
                         key={`pv-cell-${r}-${c}`}
@@ -123,7 +124,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
                 style={styles.primaryBtn}
               >
                 <Text style={styles.primaryBtnText}>Niveau Suivant</Text>
-                <ArrowRight size={20} color="#FFF" style={{ marginLeft: 6 }} />
+                <ArrowRight size={20} color={theme.colors.white} style={{ marginLeft: 6 }} />
               </TouchableOpacity>
             )}
 
@@ -133,7 +134,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
                 onPress={onReplay}
                 style={styles.secondaryBtn}
               >
-                <RotateCcw size={18} color="#F8FAFC" style={{ marginRight: 6 }} />
+                <RotateCcw size={18} color={theme.colors.text} style={{ marginRight: 6 }} />
                 <Text style={styles.secondaryBtnText}>Rejouer</Text>
               </TouchableOpacity>
 
@@ -142,7 +143,7 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
                 onPress={onHome}
                 style={styles.secondaryBtn}
               >
-                <Home size={18} color="#F8FAFC" style={{ marginRight: 6 }} />
+                <Home size={18} color={theme.colors.text} style={{ marginRight: 6 }} />
                 <Text style={styles.secondaryBtnText}>Accueil</Text>
               </TouchableOpacity>
             </View>
@@ -156,19 +157,19 @@ export const VictoryModal: React.FC<VictoryModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    backgroundColor: theme.colors.overlay,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#1E293B',
+    backgroundColor: theme.colors.surface,
     borderRadius: 24,
     padding: 20,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#38BDF8',
-    shadowColor: '#38BDF8',
+    borderColor: theme.colors.accent,
+    shadowColor: theme.colors.accent,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
     shadowRadius: 16,
@@ -184,11 +185,11 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#F59E0B',
+    borderColor: theme.colors.warning,
   },
   sparkleLeft: {
     marginRight: 8,
@@ -197,13 +198,13 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   congratsTitle: {
-    color: '#38BDF8',
+    color: theme.colors.accent,
     fontSize: 22,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
   levelTitle: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 16,
     fontWeight: '600',
     marginTop: 2,
@@ -214,15 +215,15 @@ const styles = StyleSheet.create({
   },
   pixelArtPreviewContainer: {
     alignItems: 'center',
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     padding: 12,
     borderRadius: 16,
     marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: theme.colors.border,
   },
   previewLabel: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontSize: 11,
     fontWeight: '600',
     marginBottom: 8,
@@ -232,11 +233,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: theme.colors.modalBorder,
   },
   statsRow: {
     flexDirection: 'row',
-    backgroundColor: '#0F172A',
+    backgroundColor: theme.colors.background,
     borderRadius: 14,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -251,15 +252,15 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 28,
-    backgroundColor: '#334155',
+    backgroundColor: theme.colors.border,
   },
   statLabel: {
-    color: '#94A3B8',
+    color: theme.colors.textMuted,
     fontSize: 11,
     fontWeight: '600',
   },
   statValue: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 16,
     fontWeight: '800',
     marginTop: 2,
@@ -270,20 +271,20 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   primaryBtn: {
-    backgroundColor: '#0284C7',
+    backgroundColor: theme.colors.accentDark,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 14,
     borderRadius: 16,
-    shadowColor: '#0284C7',
+    shadowColor: theme.colors.accentDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryBtnText: {
-    color: '#FFF',
+    color: theme.colors.white,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -293,7 +294,7 @@ const styles = StyleSheet.create({
   },
   secondaryBtn: {
     flex: 1,
-    backgroundColor: '#334155',
+    backgroundColor: theme.colors.border,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   secondaryBtnText: {
-    color: '#F8FAFC',
+    color: theme.colors.text,
     fontSize: 14,
     fontWeight: '700',
   },
