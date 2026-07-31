@@ -29,7 +29,6 @@ import { level24 } from './level24';
 import { level25 } from './level25';
 import { level26 } from './level26';
 import { level27 } from './level27';
-import { level28 } from './level28';
 import { level29 } from './level29';
 import { level30 } from './level30';
 import { level31 } from './level31';
@@ -75,7 +74,6 @@ import { level70 } from './level70';
 import { level71 } from './level71';
 import { level72 } from './level72';
 import { level73 } from './level73';
-import { level74 } from './level74';
 
 export const ALL_LEVELS: Level[] = [
   level1,
@@ -105,7 +103,6 @@ export const ALL_LEVELS: Level[] = [
   level25,
   level26,
   level27,
-  level28,
   level29,
   level30,
   level31,
@@ -151,5 +148,4 @@ export const ALL_LEVELS: Level[] = [
   level71,
   level72,
   level73,
-  level74,
 ];
