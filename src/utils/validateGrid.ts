@@ -74,12 +74,27 @@ export function hasMatchingColorCounts(
   return true;
 }
 
+/** Move budget multipliers for the 1–3 star rating. Lower = harder. */
+const THREE_STAR_MOVE_FACTOR = 0.85;
+const TWO_STAR_MOVE_FACTOR = 1.4;
+const MIN_THREE_STAR_MOVES = 3;
+const MIN_TWO_STAR_MOVES = 5;
+
 /**
- * Calculates 1-3 star rating based on moves vs optimal target moves (rows * cols * 1.5).
+ * Calculates 1-3 star rating based on move efficiency vs grid size.
+ * 3★ requires finishing within ~85% of the cell count (minimum 3 moves).
  */
 export function calculateStars(moves: number, totalCells: number): number {
-  const targetMoves = Math.ceil(totalCells * 1.5);
-  if (moves <= targetMoves) return 3;
-  if (moves <= targetMoves * 2) return 2;
+  const threeStarLimit = Math.max(
+    MIN_THREE_STAR_MOVES,
+    Math.ceil(totalCells * THREE_STAR_MOVE_FACTOR),
+  );
+  const twoStarLimit = Math.max(
+    MIN_TWO_STAR_MOVES,
+    Math.ceil(totalCells * TWO_STAR_MOVE_FACTOR),
+  );
+
+  if (moves <= threeStarLimit) return 3;
+  if (moves <= twoStarLimit) return 2;
   return 1;
 }

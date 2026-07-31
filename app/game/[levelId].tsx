@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Lightbulb } from 'lucide-react-native';
@@ -14,6 +14,7 @@ import { ZoomableBoard } from '../../src/components/ZoomableBoard';
 import { ReserveZone } from '../../src/components/ReserveZone';
 import { VictoryModal } from '../../src/components/VictoryModal';
 import { Level1TutorialBanner } from '../../src/components/Level1TutorialBanner';
+import { LevelLoadingScreen } from '../../src/components/LevelLoadingScreen';
 import { theme } from '../../src/constants/theme';
 import { requestStoreReviewAfterLevel } from '../../src/services/storeReview';
 
@@ -134,12 +135,7 @@ function GameScreenContent({ level }: { level: Level }) {
   };
 
   if (!isInitialized || grid.length === 0) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={theme.colors.accent} />
-        <Text style={styles.loadingText}>Chargement du niveau...</Text>
-      </View>
-    );
+    return <LevelLoadingScreen level={level} />;
   }
 
   const nextLevel = getLevelById(level.id + 1);
@@ -244,17 +240,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: theme.colors.textMuted,
-    marginTop: 12,
-    fontSize: 14,
   },
   errorContainer: {
     flex: 1,

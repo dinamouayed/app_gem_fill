@@ -8,10 +8,11 @@ from pathlib import Path
 
 from generate_level import main as image_main
 
-from level_generator.config import REPO_ROOT
+from level_generator.config import GENERATED_IMAGES_DIR, REPO_ROOT, THEMES_DIR
 from level_generator.export import sync_levels_index
 from level_generator.patterns import list_patterns
 from level_generator.procedural import generate_batch_from_catalog, generate_from_themes
+from level_generator.generate_images import generate_images_from_catalog
 from level_generator.themes import default_catalog_path, load_themes
 
 
@@ -64,6 +65,27 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Liste les motifs procéduraux disponibles",
     )
 
+    images_parser = subparsers.add_parser(
+        "images",
+        help="Génère des PNG dans assets/source/generated (sans créer de niveaux)",
+    )
+    images_parser.add_argument(
+        "--themes",
+        default=str(THEMES_DIR / "everyday.json"),
+        help="Fichier JSON de thèmes (défaut: themes/everyday.json)",
+    )
+    images_parser.add_argument(
+        "--start-index",
+        type=int,
+        default=None,
+        help="Numéro de départ pour les fichiers level_XX_slug.png",
+    )
+    images_parser.add_argument(
+        "--output-dir",
+        default=str(GENERATED_IMAGES_DIR),
+        help="Dossier de sortie des PNG",
+    )
+
     return parser
 
 
@@ -114,6 +136,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "patterns":
         for pattern in list_patterns():
             print(pattern)
+        return 0
+
+    if args.command == "images":
+        themes_path = Path(args.themes)
+        if not themes_path.is_absolute():
+            themes_path = REPO_ROOT / themes_path
+        print("----------------------------------------------------")
+        print(f"🖼️  Génération d'images depuis {themes_path.name}")
+        print(f"   Dossier : {Path(args.output_dir).relative_to(REPO_ROOT)}")
+        print("----------------------------------------------------")
+        created = generate_images_from_catalog(
+            themes_path,
+            start_index=args.start_index,
+            output_dir=Path(args.output_dir),
+        )
+        print("----------------------------------------------------")
+        print(f"✅ {len(created)} images créées")
+        print("----------------------------------------------------")
         return 0
 
     parser.print_help()

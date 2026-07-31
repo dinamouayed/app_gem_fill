@@ -288,6 +288,145 @@ def _draw_pattern(
         poly([(0, 0.15), (-0.35, 0.75), (0.35, 0.75)], c1)
         poly([(0, -0.05), (-0.18, 0.55), (0.18, 0.55)], c3)
         poly([(0, -0.35), (-0.12, 0.25), (0.12, 0.25)], c2)
+    elif kind == "lamp_post":
+        draw.rectangle((cx - unit * 0.08, cy - unit * 0.85, cx + unit * 0.08, cy + unit * 0.85), fill=c3)
+        draw.rectangle((cx - unit * 0.35, cy - unit * 0.95, cx + unit * 0.35, cy - unit * 0.75), fill=c2)
+        draw.ellipse((cx - unit * 0.25, cy - unit * 1.05, cx + unit * 0.25, cy - unit * 0.55), fill=c1)
+    elif kind == "orange_fruit":
+        draw.ellipse((cx - unit * 0.55, cy - unit * 0.35, cx + unit * 0.55, cy + unit * 0.55), fill=c1)
+        draw.line((cx, cy - unit * 0.35, cx, cy - unit * 0.65), fill=c3, width=max(2, unit // 12))
+        draw.ellipse((cx + unit * 0.05, cy - unit * 0.72, cx + unit * 0.35, cy - unit * 0.42), fill=c2)
+    elif kind == "apple":
+        draw.ellipse((cx - unit * 0.5, cy - unit * 0.35, cx + unit * 0.5, cy + unit * 0.55), fill=c1)
+        poly([(0, -0.35), (-0.08, -0.75), (0.08, -0.75)], c3)
+        draw.ellipse((cx + unit * 0.05, cy - unit * 0.75, cx + unit * 0.35, cy - unit * 0.45), fill=c2)
+    elif kind == "banana":
+        draw.arc((cx - unit * 0.75, cy - unit * 0.55, cx + unit * 0.75, cy + unit * 0.55), 30, 210, fill=c1, width=max(6, unit // 5))
+        draw.arc((cx - unit * 0.55, cy - unit * 0.35, cx + unit * 0.55, cy + unit * 0.35), 35, 205, fill=c2, width=max(3, unit // 8))
+    elif kind == "carrot":
+        poly([(0, -0.75), (-0.25, 0.75), (0.25, 0.75)], c1)
+        for dx in (-0.12, 0.0, 0.12):
+            draw.line((cx + dx * unit, cy - unit * 0.75, cx + dx * unit * 1.5, cy - unit * 0.95), fill=c2, width=max(2, unit // 12))
+    elif kind == "bread":
+        draw.ellipse((cx - unit * 0.85, cy - unit * 0.25, cx + unit * 0.85, cy + unit * 0.25), fill=c1)
+        for i in range(-3, 4):
+            draw.line((cx + i * unit * 0.18, cy - unit * 0.22, cx + i * unit * 0.18, cy + unit * 0.22), fill=c2, width=max(1, unit // 16))
+    elif kind == "umbrella":
+        draw.arc((cx - unit * 0.75, cy - unit * 0.55, cx + unit * 0.75, cy + unit * 0.35), 180, 360, fill=c1, width=max(4, unit // 6))
+        draw.line((cx, cy - unit * 0.15, cx, cy + unit * 0.85), fill=c3, width=max(2, unit // 12))
+        draw.line((cx - unit * 0.75, cy - unit * 0.15, cx + unit * 0.75, cy - unit * 0.15), fill=c2, width=max(2, unit // 14))
+    elif kind == "clock":
+        draw.ellipse((cx - unit * 0.65, cy - unit * 0.65, cx + unit * 0.65, cy + unit * 0.65), fill=c3)
+        draw.ellipse((cx - unit * 0.55, cy - unit * 0.55, cx + unit * 0.55, cy + unit * 0.55), fill=c1)
+        draw.line((cx, cy, cx, cy - unit * 0.35), fill=bg, width=max(2, unit // 10))
+        draw.line((cx, cy, cx + unit * 0.25, cy + unit * 0.05), fill=bg, width=max(2, unit // 10))
+    elif kind == "key":
+        draw.ellipse((cx - unit * 0.45, cy - unit * 0.55, cx + unit * 0.05, cy - unit * 0.05), outline=c1, width=max(3, unit // 8))
+        draw.rectangle((cx - unit * 0.05, cy - unit * 0.25, cx + unit * 0.65, cy - unit * 0.05), fill=c1)
+        draw.rectangle((cx + unit * 0.45, cy - unit * 0.05, cx + unit * 0.65, cy + unit * 0.05), fill=c1)
+        draw.rectangle((cx + unit * 0.55, cy + unit * 0.05, cx + unit * 0.65, cy + unit * 0.15), fill=c1)
+    elif kind == "scissors":
+        draw.ellipse((cx - unit * 0.55, cy - unit * 0.45, cx - unit * 0.15, cy - unit * 0.05), outline=c1, width=max(3, unit // 8))
+        draw.ellipse((cx + unit * 0.15, cy - unit * 0.45, cx + unit * 0.55, cy - unit * 0.05), outline=c1, width=max(3, unit // 8))
+        draw.line((cx - unit * 0.15, cy - unit * 0.05, cx + unit * 0.55, cy + unit * 0.75), fill=c2, width=max(3, unit // 10))
+        draw.line((cx + unit * 0.15, cy - unit * 0.05, cx - unit * 0.55, cy + unit * 0.75), fill=c2, width=max(3, unit // 10))
+    elif kind == "pencil":
+        draw.polygon([(cx - unit * 0.12, cy - unit * 0.75), (cx + unit * 0.12, cy - unit * 0.75), (cx + unit * 0.12, cy + unit * 0.45), (cx - unit * 0.12, cy + unit * 0.45)], fill=c1)
+        poly([(0, 0.45), (-0.12, 0.75), (0.12, 0.75)], c3)
+        draw.rectangle((cx - unit * 0.12, cy - unit * 0.85, cx + unit * 0.12, cy - unit * 0.75), fill=c2)
+    elif kind == "lightbulb":
+        draw.ellipse((cx - unit * 0.35, cy - unit * 0.65, cx + unit * 0.35, cy + unit * 0.15), fill=c3)
+        draw.rectangle((cx - unit * 0.18, cy + unit * 0.15, cx + unit * 0.18, cy + unit * 0.45), fill=c2)
+        draw.rectangle((cx - unit * 0.25, cy + unit * 0.45, cx + unit * 0.25, cy + unit * 0.55), fill=c1)
+    elif kind == "chair":
+        draw.rectangle((cx - unit * 0.45, cy - unit * 0.05, cx + unit * 0.45, cy + unit * 0.15), fill=c1)
+        draw.rectangle((cx - unit * 0.45, cy - unit * 0.65, cx - unit * 0.25, cy - unit * 0.05), fill=c2)
+        draw.rectangle((cx - unit * 0.12, cy + unit * 0.15, cx - unit * 0.04, cy + unit * 0.75), fill=c3)
+        draw.rectangle((cx + unit * 0.04, cy + unit * 0.15, cx + unit * 0.12, cy + unit * 0.75), fill=c3)
+        draw.rectangle((cx + unit * 0.25, cy + unit * 0.15, cx + unit * 0.45, cy + unit * 0.75), fill=c3)
+    elif kind == "bicycle":
+        draw.ellipse((cx - unit * 0.75, cy + unit * 0.05, cx - unit * 0.25, cy + unit * 0.55), outline=c1, width=max(3, unit // 8))
+        draw.ellipse((cx + unit * 0.25, cy + unit * 0.05, cx + unit * 0.75, cy + unit * 0.55), outline=c1, width=max(3, unit // 8))
+        draw.line((cx - unit * 0.5, cy + unit * 0.3, cx, cy - unit * 0.25), fill=c2, width=max(3, unit // 10))
+        draw.line((cx, cy - unit * 0.25, cx + unit * 0.5, cy + unit * 0.3), fill=c2, width=max(3, unit // 10))
+        draw.line((cx - unit * 0.15, cy - unit * 0.45, cx + unit * 0.15, cy - unit * 0.45), fill=c3, width=max(2, unit // 12))
+    elif kind == "car":
+        draw.rounded_rectangle((cx - unit * 0.75, cy - unit * 0.05, cx + unit * 0.75, cy + unit * 0.35), radius=unit // 8, fill=c1)
+        poly([(-0.35, -0.05), (0, -0.45), (0.35, -0.05)], c2)
+        draw.ellipse((cx - unit * 0.55, cy + unit * 0.25, cx - unit * 0.25, cy + unit * 0.55), fill=bg)
+        draw.ellipse((cx + unit * 0.25, cy + unit * 0.25, cx + unit * 0.55, cy + unit * 0.55), fill=bg)
+    elif kind == "phone":
+        draw.rounded_rectangle((cx - unit * 0.35, cy - unit * 0.75, cx + unit * 0.35, cy + unit * 0.75), radius=unit // 6, fill=c1)
+        draw.rounded_rectangle((cx - unit * 0.25, cy - unit * 0.55, cx + unit * 0.25, cy + unit * 0.45), radius=unit // 10, fill=c2)
+        draw.ellipse((cx - unit * 0.06, cy + unit * 0.55, cx + unit * 0.06, cy + unit * 0.67), fill=c3)
+    elif kind == "watch":
+        draw.rounded_rectangle((cx - unit * 0.85, cy - unit * 0.15, cx - unit * 0.55, cy + unit * 0.15), radius=unit // 10, fill=c2)
+        draw.rounded_rectangle((cx + unit * 0.55, cy - unit * 0.15, cx + unit * 0.85, cy + unit * 0.15), radius=unit // 10, fill=c2)
+        draw.ellipse((cx - unit * 0.45, cy - unit * 0.45, cx + unit * 0.45, cy + unit * 0.45), fill=c1)
+        draw.line((cx, cy, cx, cy - unit * 0.2), fill=bg, width=max(2, unit // 12))
+        draw.line((cx, cy, cx + unit * 0.18, cy + unit * 0.05), fill=bg, width=max(2, unit // 12))
+    elif kind == "hat":
+        draw.ellipse((cx - unit * 0.75, cy + unit * 0.05, cx + unit * 0.75, cy + unit * 0.25), fill=c2)
+        draw.ellipse((cx - unit * 0.45, cy - unit * 0.55, cx + unit * 0.45, cy + unit * 0.15), fill=c1)
+        draw.rectangle((cx - unit * 0.45, cy + unit * 0.05, cx + unit * 0.45, cy + unit * 0.15), fill=c1)
+    elif kind == "shoe":
+        draw.ellipse((cx - unit * 0.65, cy - unit * 0.15, cx + unit * 0.45, cy + unit * 0.35), fill=c1)
+        draw.rounded_rectangle((cx - unit * 0.15, cy - unit * 0.45, cx + unit * 0.35, cy - unit * 0.05), radius=unit // 8, fill=c2)
+    elif kind == "glasses":
+        draw.ellipse((cx - unit * 0.75, cy - unit * 0.25, cx - unit * 0.15, cy + unit * 0.35), outline=c1, width=max(3, unit // 8))
+        draw.ellipse((cx + unit * 0.15, cy - unit * 0.25, cx + unit * 0.75, cy + unit * 0.35), outline=c1, width=max(3, unit // 8))
+        draw.line((cx - unit * 0.15, cy + unit * 0.05, cx + unit * 0.15, cy + unit * 0.05), fill=c1, width=max(2, unit // 12))
+        draw.line((cx - unit * 0.75, cy + unit * 0.05, cx - unit * 0.95, cy + unit * 0.05), fill=c1, width=max(2, unit // 12))
+        draw.line((cx + unit * 0.75, cy + unit * 0.05, cx + unit * 0.95, cy + unit * 0.05), fill=c1, width=max(2, unit // 12))
+    elif kind == "bottle":
+        draw.rectangle((cx - unit * 0.35, cy - unit * 0.15, cx + unit * 0.35, cy + unit * 0.75), fill=c1)
+        draw.rectangle((cx - unit * 0.12, cy - unit * 0.55, cx + unit * 0.12, cy - unit * 0.15), fill=c2)
+        draw.ellipse((cx - unit * 0.12, cy - unit * 0.65, cx + unit * 0.12, cy - unit * 0.45), fill=c3)
+    elif kind == "teapot":
+        draw.ellipse((cx - unit * 0.45, cy - unit * 0.15, cx + unit * 0.45, cy + unit * 0.45), fill=c1)
+        draw.arc((cx - unit * 0.25, cy - unit * 0.55, cx + unit * 0.25, cy - unit * 0.05), 180, 360, fill=c2, width=max(3, unit // 8))
+        draw.line((cx + unit * 0.45, cy + unit * 0.05, cx + unit * 0.85, cy - unit * 0.05), fill=c2, width=max(3, unit // 10))
+        draw.arc((cx - unit * 0.75, cy - unit * 0.05, cx - unit * 0.35, cy + unit * 0.35), 90, 270, fill=c3, width=max(3, unit // 10))
+    elif kind == "fork":
+        draw.rectangle((cx - unit * 0.08, cy - unit * 0.15, cx + unit * 0.08, cy + unit * 0.85), fill=c3)
+        for dx in (-0.18, 0.0, 0.18):
+            draw.rectangle((cx + dx * unit - unit * 0.04, cy - unit * 0.75, cx + dx * unit + unit * 0.04, cy - unit * 0.15), fill=c1)
+    elif kind == "plate":
+        draw.ellipse((cx - unit * 0.75, cy - unit * 0.25, cx + unit * 0.75, cy + unit * 0.55), fill=c1)
+        draw.ellipse((cx - unit * 0.55, cy - unit * 0.05, cx + unit * 0.55, cy + unit * 0.35), fill=c2)
+    elif kind == "toaster":
+        draw.rounded_rectangle((cx - unit * 0.65, cy - unit * 0.25, cx + unit * 0.65, cy + unit * 0.45), radius=unit // 8, fill=c1)
+        for dx in (-0.25, 0.0, 0.25):
+            draw.rectangle((cx + dx * unit - unit * 0.08, cy - unit * 0.45, cx + dx * unit + unit * 0.08, cy - unit * 0.25), fill=bg)
+        draw.rectangle((cx - unit * 0.55, cy + unit * 0.25, cx + unit * 0.55, cy + unit * 0.45), fill=c2)
+    elif kind == "hammer":
+        draw.rectangle((cx - unit * 0.08, cy - unit * 0.15, cx + unit * 0.08, cy + unit * 0.85), fill=c3)
+        draw.rectangle((cx - unit * 0.45, cy - unit * 0.55, cx + unit * 0.45, cy - unit * 0.15), fill=c1)
+    elif kind == "envelope":
+        draw.rectangle((cx - unit * 0.75, cy - unit * 0.25, cx + unit * 0.75, cy + unit * 0.55), fill=c1)
+        poly([(-0.75, -0.25), (0, 0.15), (0.75, -0.25)], c2)
+        draw.line((cx - unit * 0.75, cy - unit * 0.25, cx, cy + unit * 0.15), fill=c3, width=max(2, unit // 14))
+        draw.line((cx + unit * 0.75, cy - unit * 0.25, cx, cy + unit * 0.15), fill=c3, width=max(2, unit // 14))
+    elif kind == "camera":
+        draw.rounded_rectangle((cx - unit * 0.65, cy - unit * 0.25, cx + unit * 0.65, cy + unit * 0.45), radius=unit // 8, fill=c1)
+        draw.ellipse((cx - unit * 0.25, cy - unit * 0.05, cx + unit * 0.25, cy + unit * 0.25), fill=bg)
+        draw.ellipse((cx - unit * 0.15, cy + unit * 0.05, cx + unit * 0.15, cy + unit * 0.35), outline=c2, width=max(2, unit // 10))
+        draw.rectangle((cx - unit * 0.15, cy - unit * 0.45, cx + unit * 0.15, cy - unit * 0.25), fill=c3)
+    elif kind == "toothbrush":
+        draw.rectangle((cx - unit * 0.08, cy - unit * 0.45, cx + unit * 0.08, cy + unit * 0.75), fill=c2)
+        draw.rectangle((cx - unit * 0.18, cy - unit * 0.75, cx + unit * 0.18, cy - unit * 0.45), fill=c1)
+        for i in range(5):
+            draw.line((cx - unit * 0.15 + i * unit * 0.07, cy - unit * 0.75, cx - unit * 0.15 + i * unit * 0.07, cy - unit * 0.85), fill=c3, width=max(1, unit // 16))
+    elif kind == "watermelon":
+        draw.ellipse((cx - unit * 0.65, cy - unit * 0.45, cx + unit * 0.65, cy + unit * 0.55), fill=c1)
+        for i in range(-2, 3):
+            draw.arc((cx - unit * 0.55 + i * unit * 0.15, cy - unit * 0.35, cx + unit * 0.55 + i * unit * 0.15, cy + unit * 0.45), 0, 180, fill=c2, width=max(2, unit // 12))
+        draw.ellipse((cx - unit * 0.08, cy - unit * 0.55, cx + unit * 0.08, cy - unit * 0.39), fill=c3)
+    elif kind == "goldfish":
+        draw.ellipse((cx - unit * 0.55, cy - unit * 0.25, cx + unit * 0.35, cy + unit * 0.35), fill=c1)
+        poly([(0.35, 0.05), (0.85, -0.25), (0.85, 0.35)], c2)
+        draw.ellipse((cx - unit * 0.25, cy - unit * 0.05, cx - unit * 0.05, cy + unit * 0.15), fill=bg)
+        draw.polygon([(cx + unit * 0.55, cy - unit * 0.15), (cx + unit * 0.75, cy - unit * 0.35), (cx + unit * 0.65, cy - unit * 0.05)], fill=c2)
     else:
         draw.rectangle((cx - unit, cy - unit, cx + unit, cy + unit), fill=c1)
         draw.ellipse((cx - unit * 0.5, cy - unit * 0.5, cx + unit * 0.5, cy + unit * 0.5), fill=c2)
@@ -300,7 +439,18 @@ def _draw_pattern(
 
 
 
-PATTERN_KINDS: list[str] = ['heart', 'star', 'sun', 'moon', 'flower', 'tree', 'house', 'fish', 'cat', 'mushroom', 'diamond', 'smiley', 'arrow', 'spiral', 'waves', 'mountain', 'cloud', 'bolt', 'crown', 'butterfly', 'cherry', 'lemon', 'icecream', 'cupcake', 'rocket', 'planet', 'ring_planet', 'cactus', 'snake', 'turtle', 'owl', 'fox', 'penguin', 'crab', 'octopus', 'whale', 'anchor', 'sailboat', 'plane', 'balloon', 'gift', 'bell', 'music', 'gamepad', 'puzzle', 'target', 'dice', 'clover', 'snowflake', 'campfire']
+PATTERN_KINDS: list[str] = [
+    'heart', 'star', 'sun', 'moon', 'flower', 'tree', 'house', 'fish', 'cat', 'mushroom',
+    'diamond', 'smiley', 'arrow', 'spiral', 'waves', 'mountain', 'cloud', 'bolt', 'crown',
+    'butterfly', 'cherry', 'lemon', 'icecream', 'cupcake', 'rocket', 'planet', 'ring_planet',
+    'cactus', 'snake', 'turtle', 'owl', 'fox', 'penguin', 'crab', 'octopus', 'whale', 'anchor',
+    'sailboat', 'plane', 'balloon', 'gift', 'bell', 'music', 'gamepad', 'puzzle', 'target',
+    'dice', 'clover', 'snowflake', 'campfire',
+    'lamp_post', 'orange_fruit', 'apple', 'banana', 'carrot', 'bread', 'umbrella', 'clock',
+    'key', 'scissors', 'pencil', 'lightbulb', 'chair', 'bicycle', 'car', 'phone', 'watch',
+    'hat', 'shoe', 'glasses', 'bottle', 'teapot', 'fork', 'plate', 'toaster', 'hammer',
+    'envelope', 'camera', 'toothbrush', 'watermelon', 'goldfish',
+]
 
 
 def list_patterns() -> list[str]:

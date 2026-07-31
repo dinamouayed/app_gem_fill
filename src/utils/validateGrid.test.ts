@@ -80,25 +80,28 @@ describe("hasMatchingColorCounts", () => {
 });
 
 describe("calculateStars", () => {
-  it("awards 3 stars at or below the optimal move target", () => {
-    // 4 cells → targetMoves = ceil(4 * 1.5) = 6
+  it("awards 3 stars at or below the tight move target", () => {
+    // 4 cells → threeStarLimit = max(3, ceil(3.4)) = 4
     expect(calculateStars(1, 4)).toBe(3);
-    expect(calculateStars(6, 4)).toBe(3);
+    expect(calculateStars(4, 4)).toBe(3);
+    expect(calculateStars(5, 4)).toBe(2);
   });
 
-  it("awards 2 stars within twice the optimal move target", () => {
-    expect(calculateStars(7, 4)).toBe(2);
-    expect(calculateStars(12, 4)).toBe(2);
+  it("awards 2 stars within the secondary move target", () => {
+    // 4 cells → twoStarLimit = max(5, ceil(5.6)) = 6
+    expect(calculateStars(6, 4)).toBe(2);
+    expect(calculateStars(7, 4)).toBe(1);
   });
 
-  it("awards 1 star above twice the optimal move target", () => {
+  it("awards 1 star above the secondary move target", () => {
     expect(calculateStars(13, 4)).toBe(1);
   });
 
   it("scales with larger grids", () => {
-    // 16 cells → targetMoves = ceil(16 * 1.5) = 24
-    expect(calculateStars(24, 16)).toBe(3);
-    expect(calculateStars(25, 16)).toBe(2);
-    expect(calculateStars(49, 16)).toBe(1);
+    // 16 cells → threeStar = 14, twoStar = 23
+    expect(calculateStars(14, 16)).toBe(3);
+    expect(calculateStars(15, 16)).toBe(2);
+    expect(calculateStars(23, 16)).toBe(2);
+    expect(calculateStars(24, 16)).toBe(1);
   });
 });
